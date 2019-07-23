@@ -1,0 +1,196 @@
+import re, json, collections
+
+class YarnController(object):
+    def __init__(self, path, name, echo=False):
+        """load yarn file from path path.
+If echo is True, link text will be added back into the message. For example:
+"You can [[go further up the hill|UpperHillside]]" 
+  -> "You can [go further up the hill]"
+"""
+        self.finished=False
+        self.name=name
+        self.states=dict()
+        self.echo=echo
+        self.state=None
+        parsed=json.loads(open(path).read())
+
+        for state in parsed:
+            body=state["body"]
+            title=state["title"]
+            self.states[title]=YarnState(title, body, self)
+
+        # passed to eval of user <<statements>>
+        self.locals=dict()
+        
+        # user can reference these 
+        self.visited=collections.defaultdict(lambda:False)
+        self.visits=collections.defaultdict(lambda:0)
+
+        self.locals["visited"]=self.visited
+        self.locals["num_visits"]=self.visits
+        self.locals["visited_before"]=False
+        self.locals["last_state"]=None
+        self.locals["state"]=None
+        self.locals["YarnObj"]=self
+
+        # code in the first state is guaranteed to run!
+        self.set_state("Start")
+
+    def eval(self, code):
+        return eval(code, {}, self.locals)
+
+    def exec(self, code):
+        exec(code, {}, self.locals)
+
+    def __getattr__(self, attr):
+        if attr in self.locals:
+            return self.locals[attr]
+        raise AttributeError("%r object has no attribute %r" %
+                             (self.__class__.__name__, attr))
+
+    def set_state(self, title="Start"):
+        # set these before expanding the template code
+        # so they are available to the user
+        self.locals["last_state"]=self.locals["state"]
+        self.state=self.states[title]
+        self.locals["visited_before"]=self.visited[title]
+        self.visited[title]=True
+        self.visits[title]+=1
+        self.locals["state"]=self.state.title
+        
+        self.state.run_parse()
+        if len(self.state.choices)==0:
+            # could also be set by user
+            self.finished=True
+
+    def message(self):
+        return self.state.message
+
+    def transition(self, choice):
+        self.set_state(self.state.transitions[choice])
+        return self.message(), self.choices() 
+
+    def choices(self):
+        return self.state.choices
+
+def code_munge(r, controller):
+    line = r[0]
+    mod  = r[1]
+    args = r[2]
+    if mod=="print":
+        result = controller.eval(args)
+        return str(result)
+    if mod=="println":
+        result = controller.eval(args)
+        return str(result)+"\n"
+    if mod=="run":
+        result = controller.exec(args)
+        return ""
+    if mod=="include":
+        thestate= controller.states[args]
+        return run_macros(thestate.body, controller)
+    else:
+        return "UNKNOWN MACRO"
+
+def run_macros(code, controller):
+    code_rgx = "<<(\w+)\\b[ ]*(.*?)>>"
+
+    result=""
+    start_pos=0
+
+    stack=[True]
+    no_skip=True
+    for token_match in re.finditer(code_rgx, code):
+        if no_skip:
+            result   += code[start_pos:token_match.start()]
+        start_pos = token_match.end()
+
+        
+        # don't add a newline for a <<statement>> on its own line 
+        if (len(result) > 0
+            and start_pos < len(code)
+            and code[start_pos]=="\n"
+            and result[-1]=="\n"):
+            start_pos+=1
+
+        # if-then-else aka <<if X>> <<else>> <<endif>> has special logic
+        mod  = token_match[1]
+        if mod == "if":
+            no_skip = no_skip and controller.eval(token_match[2])
+            stack.append(no_skip)
+        elif mod =="else":
+            stack.pop()
+            no_skip = (not no_skip) and stack[-1]
+            stack.append(no_skip)
+        elif mod == "endif":
+            stack.pop()
+            no_skip=stack[-1]
+        else:
+            # other <<statements>> handled here
+            if no_skip:
+                result += code_munge(token_match, controller)
+
+    # don't forget any text after the last statement            
+    result += code[start_pos:]
+    assert(no_skip)
+    assert(len(stack)==1)
+    return result
+
+class DummyController(object):
+    def eval(self, arg):
+        return eval(arg)
+    def exec(self, arg):
+        return exec(arg)
+
+class YarnState(object):
+
+    def __init__(self, title, body, parent):
+        self.title=title
+        self.body=body
+        self.transitions={}
+        self.message=""
+        self.choices=[]
+        self.controller=parent
+
+    def run_parse(self):
+        self.transitions={}
+        self.message=""
+        self.choices=[]
+
+        #two passes expand the template first
+        expanded = run_macros(self.body, self.controller)
+
+        # that means in the second pass we might find a [[link|link]] created
+        # by the code inserted by a <<print "[[link|link]]">>
+        # This link might be invisible to the yarn editor
+        # but <<statements>> generated by code are not expanded again!
+
+        # then search for [[link text|target]] syntax
+        link_rgx = r"\[\[([^\|\[\]]*?)\|(\w+)\]\]"
+        last_index=0
+        for link in re.finditer(link_rgx, expanded):
+            assert link[2] in self.controller.states
+            self.transitions[link[1]]=link[2]
+            self.choices.append(link[1])
+            
+            # add previous text to the result
+            self.message+=expanded[last_index:link.start()]
+            if self.controller.echo:
+                self.message+="["+link[1]+"]"
+            last_index=link.end()
+            
+            # skip adding newlines to the message if the link is on
+            # a separate line and the text is not echoed
+            if (not self.controller.echo
+                and last_index < len(expanded)
+                and expanded[last_index]=="\n"):
+                last_index+=1
+        #don't forget any text after the last link      
+        self.message+=expanded[last_index:]
+        if self.message[-1]=="\n":
+            self.message=self.message[:-1]
+        if self.message[0]=="\n":
+            self.message=self.message[1:]
+
+        
+        return self.message, self.choices

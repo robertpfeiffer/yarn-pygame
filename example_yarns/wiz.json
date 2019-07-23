@@ -1,0 +1,72 @@
+[
+	{
+		"title": "Start",
+		"tags": "#tags",
+		"body": "<<run mana = 20>>\n<<run loops=1>>\nYou see a wizard.\n[[Greet him|Greet]]",
+		"position": {
+			"x": -170,
+			"y": -21
+		},
+		"colorID": 3
+	},
+	{
+		"title": "Spells",
+		"tags": "",
+		"body": "player: You are a wizard. Can you cast a spell?\nwizard: <<if mana < 0>>I'm out of mana!<<else>><<if loops > 5 >>Again? Am I a joke to you?\n Ok, fine.\n<<else>>Indeed I am. <<endif>>What do you need?[[Ask about fireballs|Fire]]\n[[Ask about lightning|Flash]]\n[[Nothing in particular|Back]]<<endif>> <<run loops +=1>>",
+		"position": {
+			"x": 203,
+			"y": 579
+		},
+		"colorID": 0
+	},
+	{
+		"title": "Back",
+		"tags": "",
+		"body": "player: No spell in particular comes to mind. I was just asking...\nwizard: Then yes, I CAN cast a spell.\n[[bye|Bye]]",
+		"position": {
+			"x": 173,
+			"y": 91
+		},
+		"colorID": 0
+	},
+	{
+		"title": "Bye",
+	        "tags": "",
+		"body": "player: Farewell!\nwizard: <<if loops>5>>Good riddance!<<else>>Safe travels!<<endif>>\n\n[[come back|Spells]]",
+		"position": {
+			"x": 577,
+			"y": -55
+		},
+		"colorID": 1
+	},
+	{
+		"title": "Greet",
+		"tags": "",
+		"body": "wizard: Greetings, Traveller!\nplayer: Well met!\n[[Ask about wizardry|Spells]]",
+		"position": {
+			"x": -254,
+			"y": 482
+		},
+		"colorID": 0
+	},
+	{
+		"title": "Flash",
+		"tags": "",
+		"body": "player: Lightning Please!\nwizard: ...\n\n*Zap!*\n<<run mana-=3>>[[More!|Spells]]\n[[I've had enough.|Bye]]",
+		"position": {
+			"x": 856,
+			"y": 622
+		},
+		"colorID": 5
+	},
+	{
+		"title": "Fire",
+		"tags": "",
+		"body": "player: A Fireball Please\n*wizard concentrates*\n\n*BOOM!*\n<<run mana-=5>>[[That was impressive! More!|Spells]]\n[[I've had enough.|Bye]]",
+		"position": {
+			"x": 566,
+			"y": 342
+		},
+		"colorID": 5
+	}
+]

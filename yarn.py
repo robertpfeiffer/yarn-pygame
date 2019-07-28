@@ -1,28 +1,37 @@
 import re, json, collections
 
 class YarnController(object):
-    def __init__(self, path, name, echo=False):
+    def __init__(self, path, name, echo=False, init_locals={}, json_content=None):
         """load yarn file from path path.
 If echo is True, link text will be added back into the message. For example:
-"You can [[go further up the hill|UpperHillside]]" 
-  -> "You can [go further up the hill]"
-"""
+        "You can [[climb the hill|UpperHillside]]" becomes "You can [climb the hill]"
+        """
         self.finished=False
         self.name=name
         self.states=dict()
         self.echo=echo
         self.state=None
-        parsed=json.loads(open(path).read())
+
+        if json_content:
+            parsed=json_content
+        else:
+            parsed=json.loads(open(path).read())
 
         for state in parsed:
             body=state["body"]
             title=state["title"]
-            self.states[title]=YarnState(title, body, self)
+            new_state=YarnState(title, body, self)
+            self.states[title]=new_state
+            new_state.pre_compile()
+            for sub_state in new_state.sub_states:
+                self.states[sub_state.title]=sub_state
 
         # passed to eval of user <<statements>>
         self.locals=dict()
-        
-        # user can reference these 
+        for akey in init_locals:
+            self.locals[akey]=init_locals[akey]
+
+        # user can reference these
         self.visited=collections.defaultdict(lambda:False)
         self.visits=collections.defaultdict(lambda:0)
 
@@ -57,7 +66,7 @@ If echo is True, link text will be added back into the message. For example:
         self.visited[title]=True
         self.visits[title]+=1
         self.locals["state"]=self.state.title
-        
+
         self.state.run_parse()
         if len(self.state.choices)==0:
             # could also be set by user
@@ -68,7 +77,7 @@ If echo is True, link text will be added back into the message. For example:
 
     def transition(self, choice):
         self.set_state(self.state.transitions[choice])
-        return self.message(), self.choices() 
+        return self.message(), self.choices()
 
     def choices(self):
         return self.state.choices
@@ -98,15 +107,15 @@ def run_macros(code, controller):
     result=""
     start_pos=0
 
-    stack=[True]
-    no_skip=True
+    stack=[]
+    found_clause=False
+    skip_over=False
     for token_match in re.finditer(code_rgx, code):
-        if no_skip:
+        if not skip_over:
             result   += code[start_pos:token_match.start()]
-        start_pos = token_match.end()
+            start_pos = token_match.end()
 
-        
-        # don't add a newline for a <<statement>> on its own line 
+        # don't add a newline for a <<statement>> on its own line
         if (len(result) > 0
             and start_pos < len(code)
             and code[start_pos]=="\n"
@@ -115,25 +124,43 @@ def run_macros(code, controller):
 
         # if-then-else aka <<if X>> <<else>> <<endif>> has special logic
         mod  = token_match[1]
+        args = token_match[2].strip()
         if mod == "if":
-            no_skip = no_skip and controller.eval(token_match[2])
-            stack.append(no_skip)
+            stack.append((found_clause, skip_over))
+            found_clause=False
+            if not stack[-1][1]:
+                found_clause = controller.eval(args)
+                skip_over = not found_clause
+            else:
+                found_clause=True
+                skip_over=True
         elif mod =="else":
-            stack.pop()
-            no_skip = (not no_skip) and stack[-1]
-            stack.append(no_skip)
+            if found_clause:
+                skip_over=True
+            elif not stack[-1][1]:
+                skip_over=False
+                found_clause=True
+        elif mod =="elif":
+            if found_clause:
+                skip_over=True
+            elif not stack[-1][1]:
+                found_clause= controller.eval(args)
+                skip_over= not found_clause
         elif mod == "endif":
-            stack.pop()
-            no_skip=stack[-1]
+            (found_clause, skip_over)=stack.pop()
+        elif mod == "goto":
+            if not skip_over:
+                controller.set_state(args)
+                return
         else:
             # other <<statements>> handled here
-            if no_skip:
+            if not skip_over:
                 result += code_munge(token_match, controller)
 
-    # don't forget any text after the last statement            
+    # don't forget any text after the last statement
     result += code[start_pos:]
-    assert(no_skip)
-    assert(len(stack)==1)
+    assert(not skip_over)
+    assert(len(stack)==0)
     return result
 
 class DummyController(object):
@@ -142,8 +169,41 @@ class DummyController(object):
     def exec(self, arg):
         return exec(arg)
 
-class YarnState(object):
+def get_indent(line):
+    line=line.expandtabs()
+    indent=0
+    for char in line:
+        if char.isspace():
+            indent+=1
+        else:
+            return indent
+    return -1
 
+def get_indented_block(lines, head):
+    head_line=lines[head]
+    assert(head+1<len(lines))
+    first_line=lines[head+1]
+    base_indent=get_indent(head_line)
+    block_indent=get_indent(first_line)
+    assert(block_indent>base_indent)
+    block=[]
+    i=head+1
+    while i<len(lines):
+        line=lines[i]
+        indent=get_indent(line)
+        if indent>=block_indent:
+            block.append(line[block_indent:])
+            i+=1
+        elif indent==-1:
+            block.append("")
+            i+=1
+        else:
+            assert(i>head)
+            assert(indent==0)
+            break
+    return i, block
+
+class YarnState(object):
     def __init__(self, title, body, parent):
         self.title=title
         self.body=body
@@ -152,6 +212,47 @@ class YarnState(object):
         self.choices=[]
         self.controller=parent
 
+    def pre_compile(self):
+        #print("Pre-compiling", self.title)
+        #print(self.body)
+        self.sub_states=[]
+        lines=self.body.split("\n")
+        found_choices=False
+        compiled=""
+        sub_state=None
+        i = 0
+        while i<len(lines):
+            line=lines[i]
+            if line.startswith("->"):
+                choice_line=lines[i]
+                choice_text=choice_line[2:].strip()
+                i, block_lines=get_indented_block(lines, i)
+
+                sub_state_code="\n".join(block_lines)
+                sub_state_name=self.title+"$sub"+str(i)
+
+                sub_state=YarnState(sub_state_name,
+                                  sub_state_code,
+                                  self.controller)
+                compiled+=f"[[{choice_text}|{sub_state_name}]]\n"
+                self.sub_states.append(sub_state)
+                sub_state.pre_compile()
+
+                for sub_sub_state in sub_state.sub_states:
+                    self.sub_states.append(sub_sub_state)
+            else:
+                compiled+=line+"\n"
+                i+=1
+
+        #if len(self.sub_states)>0:
+        #    print("added", len(self.sub_states))
+        #    print()
+
+        while len(compiled) > 1 and compiled [-1]=="\n":
+            compiled=compiled[:-1]
+
+        self.body=compiled
+
     def run_parse(self):
         self.transitions={}
         self.message=""
@@ -159,6 +260,9 @@ class YarnState(object):
 
         #two passes expand the template first
         expanded = run_macros(self.body, self.controller)
+        if self.controller.state!=self:
+            #GOTO detected
+            return
 
         # that means in the second pass we might find a [[link|link]] created
         # by the code inserted by a <<print "[[link|link]]">>
@@ -166,31 +270,32 @@ class YarnState(object):
         # but <<statements>> generated by code are not expanded again!
 
         # then search for [[link text|target]] syntax
-        link_rgx = r"\[\[([^\|\[\]]*?)\|(\w+)\]\]"
+        link_rgx = r"\[\[([^\|\[\]]*?)\|([\$\w]+)\]\]"
         last_index=0
         for link in re.finditer(link_rgx, expanded):
             assert link[2] in self.controller.states
             self.transitions[link[1]]=link[2]
             self.choices.append(link[1])
-            
+
             # add previous text to the result
             self.message+=expanded[last_index:link.start()]
             if self.controller.echo:
                 self.message+="["+link[1]+"]"
             last_index=link.end()
-            
+
             # skip adding newlines to the message if the link is on
             # a separate line and the text is not echoed
             if (not self.controller.echo
                 and last_index < len(expanded)
                 and expanded[last_index]=="\n"):
                 last_index+=1
-        #don't forget any text after the last link      
+                #don't forget any text after the last link
         self.message+=expanded[last_index:]
-        if self.message[-1]=="\n":
-            self.message=self.message[:-1]
-        if self.message[0]=="\n":
-            self.message=self.message[1:]
+        if len(self.message)>1:
+            if self.message[-1]=="\n":
+                self.message=self.message[:-1]
+            if self.message[0]=="\n":
+                self.message=self.message[1:]
 
-        
+
         return self.message, self.choices

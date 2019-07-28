@@ -55,10 +55,44 @@ which nodes have been visited. `visited_before` is a bool indicating whether
 the current node has been visited before. `state` is the name of the current
 node. `last_state` is the name of the visited last node.
 
+There is also a shorthand syntax based on indentation. It gets compiled into
+anonymous nodes. 
+```
+-> option A
+   result A
+-> option B
+   result B
+   -> sub-option B1
+      result B1
+   -> sub-option B2
+      result B2
+-> This is just text after the arrow you don't have to write "option"
+   The text of the node
+   can span over multiple lines
+```
+
+The shorthand
+```
+-> A
+   B
+   C
+   [[foo|bar]]
+```
+is equivalent to 
+```
+[[A|OtherNode]]
+```
+where OtherNode contains
+```
+B
+C
+[[foo|bar]]
+```
+
 Roadmap
 -------
 Different frontends will assign further meaning to Yarn output, for 
-example to connect text to multiple characters. In the future, it might look 
+example to connect text to multiple characters. It might look 
 like this:
 
 ```

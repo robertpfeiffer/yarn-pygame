@@ -1,0 +1,97 @@
+[
+        {
+                "body": "<<run mana = 20>>\n<<run loops=1>>\nYou see a wizard.\n[[Greet him|Greet]]",
+                "colorID": 3,
+                "links": [
+                        "Greet"
+                ],
+                "position": {
+                        "x": 476,
+                        "y": 337
+                },
+                "tags": "#tags",
+                "title": "Start"
+        },
+        {
+                "body": "player: You are a wizard. Can you cast a spell?\nwizard: <<if mana < 0>>I'm out of mana!<<else>><<if loops > 5 >>Again? Am I a joke to you?\n Ok, fine.\n<<else>>Indeed I am. <<endif>>What do you need?[[Ask about fireballs|Fire]]\n[[Ask about lightning|Flash]]\n[[Nothing in particular|Back]]<<endif>> <<run loops +=1>>",
+                "colorID": 0,
+                "links": [
+                        "Fire",
+                        "Flash",
+                        "Back"
+                ],
+                "position": {
+                        "x": 930,
+                        "y": 497
+                },
+                "tags": "",
+                "title": "Spells"
+        },
+        {
+                "body": "player: No spell in particular comes to mind. I was just asking...\nwizard: Then yes, I CAN cast a spell.\n[[bye|Bye]]",
+                "colorID": 0,
+                "links": [
+                        "Bye"
+                ],
+                "position": {
+                        "x": 509,
+                        "y": 630
+                },
+                "tags": "",
+                "title": "Back"
+        },
+        {
+                "body": "player: Farewell!\nwizard: <<if loops>5>>Good riddance!<<else>>Safe travels!<<endif>>\n\n[[come back|Spells]]",
+                "colorID": 1,
+                "links": [
+                        "Spells"
+                ],
+                "position": {
+                        "x": 955,
+                        "y": 795
+                },
+                "tags": "",
+                "title": "Bye"
+        },
+        {
+                "body": "wizard: Greetings, Traveller!\nplayer: Well met!\n[[Ask about wizardry|Spells]]",
+                "colorID": 0,
+                "links": [
+                        "Spells"
+                ],
+                "position": {
+                        "x": 718,
+                        "y": 338
+                },
+                "tags": "",
+                "title": "Greet"
+        },
+        {
+                "body": "player: Lightning Please!\nwizard: ...\n\n*Zap!*\n<<run mana-=3>>[[More!|Spells]]\n[[I've had enough.|Bye]]",
+                "colorID": 5,
+                "links": [
+                        "Spells",
+                        "Bye"
+                ],
+                "position": {
+                        "x": 837,
+                        "y": 635
+                },
+                "tags": "",
+                "title": "Flash"
+        },
+        {
+                "body": "player: A Fireball Please\n*wizard concentrates*\n\n*BOOM!*\n<<run mana-=5>>[[That was impressive! More!|Spells]]\n[[I've had enough.|Bye]]",
+                "colorID": 5,
+                "links": [
+                        "Spells",
+                        "Bye"
+                ],
+                "position": {
+                        "x": 1052,
+                        "y": 651
+                },
+                "tags": "",
+                "title": "Fire"
+        }
+]

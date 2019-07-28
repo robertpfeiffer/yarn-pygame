@@ -1,6 +1,5 @@
 import yarn
 
-
 def run_in_console(controller):
     while not controller.finished:
         print(controller.message())
@@ -26,8 +25,3 @@ def run_in_console(controller):
     print(controller.message())
     print("The End")
             
-if __name__=="__main__":
-    import sys
-    path=sys.argv[1]
-    controller=yarn.YarnController(path, "console", False)
-    run_in_console(controller)

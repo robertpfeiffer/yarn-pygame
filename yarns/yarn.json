@@ -2,11 +2,6 @@
    {
       "body": "<<run i = 1>>\nEmpty Text\n<<print i>>\n[[Go Left|Node1]]\n[[Go Right|Node2]]\n[[testing nested|Node6]]",
       "colorID": 0,
-      "links": [
-         "Node1",
-         "Node2",
-         "Node6"
-      ],
       "position": {
          "x": 736,
          "y": -50
@@ -17,10 +12,6 @@
    {
       "body": "At Node 1\n (including node 2: <<include Node2>>)\n[[To Node 3|Node3]][[To End|Node4]]",
       "colorID": 0,
-      "links": [
-         "Node3",
-         "Node4"
-      ],
       "position": {
          "x": 643,
          "y": 358
@@ -31,9 +22,6 @@
    {
       "body": "At Node 2\n i=<<print i>>\n[[Back To Node 1|Node1]]",
       "colorID": 0,
-      "links": [
-         "Node1"
-      ],
       "position": {
          "x": 477,
          "y": 110
@@ -44,9 +32,6 @@
    {
       "body": "Incremented I\n<<run i = i + 1 >>\n[[Go To Node 2|Node2]]\n",
       "colorID": 0,
-      "links": [
-         "Node2"
-      ],
       "position": {
          "x": 420,
          "y": 525
@@ -57,7 +42,6 @@
    {
       "body": "Empty TextHello <<if True>>World <<if False>>Bar<<else>>From The Outside<<endif>>\n<<else>> Foo <<endif>>\n\nHello, <<if False>>World<<elif 1==1>>is it me you're looking for?<<elif True>>you<<else>>Dolly<<endif>>!\n\nHello, <<if False>>World<<elif 1==2>>is it me you're looking for?<<elif True>>you<<else>>Dolly<<endif>>!\n\nHello, <<if False>>World <<if False>><<elif 1==1>>is it me you're looking for?<<elif 1==1>>you<<endif>><<else>>Dolly<<endif>>!\n\nFOOFOOBARBAZ",
       "colorID": 0,
-      "links": [],
       "position": {
          "x": 826,
          "y": 531
@@ -68,10 +52,6 @@
    {
       "body": "You have two options\n-> Option A\n   You took Option A\n   [[Back|Start]]\n-> Option B\n   You took Option B\n   Now You Have More Options\n   -> Option C\n       dead end!\n   -> Option D\n      [[Back|Start]]\n-> I lied You Have Three Options\n   But this one ended the game",
       "colorID": 0,
-      "links": [
-         "Start",
-         "Start"
-      ],
       "position": {
          "x": 933,
          "y": 185

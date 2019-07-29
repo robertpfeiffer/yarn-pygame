@@ -3,18 +3,26 @@ import sys
 sys.modules["numpy"]=None
 import json, os, re, collections, sys, pygame, tempfile, math, subprocess
 
-def edit_file(name, contents, editor):
+def edit_file(name, contents, editor_cmd):
     try:
         with tempfile.NamedTemporaryFile(
                 mode='w', suffix=".yarn.txt", prefix=name+"_", delete=False) as file_obj:
             file_obj.write(name+"\n")
             file_obj.write(contents)
             file_name=file_obj.name
-        try:
-            result=subprocess.run(editor+[file_obj.name])
-        except:
-            result=subprocess.run(["gvim", "-f"]+[file_obj.name])
-        if result.returncode==0:
+        success=False
+        fallback_editors= [["emacsclient", "-c"], ["subl", "-n", "-w"], ["code", "--wait"], ["gvim", "-f"]]
+        if editor_cmd:
+            fallback_editors= [editor_cmd]+fallback_editors
+        for editor in fallback_editors:
+            try:
+                result=subprocess.run(editor+[file_obj.name])
+                if result.returncode==0:
+                    success=True
+                    break
+            except FileNotFoundError:
+                success=False
+        if success:
             with open(file_name, "r") as file_obj:
                 name=file_obj.readline().strip()
                 contents=file_obj.read()
@@ -57,10 +65,9 @@ def editor():
         print("usage: python3 editor.py filename.json [texteditor [params]]")
         print("eg: python3 editor.py filename.json gedit")
 
+    editor_program=None
     if len(sys.argv) > 2:
         editor_program=sys.argv[2:]
-    else:
-        editor_program=["emacsclient", "-c"]
         
     if os.path.exists(file_name):
         with open(file_name) as thefile:
@@ -114,6 +121,7 @@ def editor():
             if e.type==pygame.QUIT:
                 for arect in json_content:
                     del arect["rect"]
+                    del arect["links"]
                 with open(file_name, "w") as thefile:
                     json.dump(json_content, thefile, indent=3, sort_keys=True, )
                 running=False

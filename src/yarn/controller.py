@@ -39,6 +39,7 @@ If echo is True, link text will be added back into the message. For example:
         self.locals["num_visits"]=self.visits
         self.locals["visited_before"]=False
         self.locals["last_state"]=None
+        self.locals["link_text"]=""
         self.locals["state"]=None
         self.locals["YarnObj"]=self
 
@@ -76,6 +77,9 @@ If echo is True, link text will be added back into the message. For example:
         return self.state.message
 
     def transition(self, choice):
+        if type(choice)==int:
+            choice=self.state.choices[choice]
+        self.locals["link_text"]=choice
         self.set_state(self.state.transitions[choice])
         return self.message(), self.choices()
 
@@ -101,9 +105,12 @@ def code_munge(r, controller):
     else:
         return "UNKNOWN MACRO"
 
-def run_macros(code, controller):
-    code_rgx = "<<(\w+)\\b[ ]*(.*?)>>"
-
+def run_macros(code, controller, late_pass=False):
+    if late_pass:
+        code_rgx = "<<!(\w+)\\b[ ]*(.*?)>>"
+    else:
+        code_rgx = "<<(\w+)\\b[ ]*(.*?)>>"
+    
     result=""
     start_pos=0
 

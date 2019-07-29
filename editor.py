@@ -1,14 +1,19 @@
 #!/usr/bin/python3
+import sys
+sys.modules["numpy"]=None
 import json, os, re, collections, sys, pygame, tempfile, math, subprocess
 
-def edit_file(name, contents):
+def edit_file(name, contents, editor):
     try:
         with tempfile.NamedTemporaryFile(
                 mode='w', suffix=".yarn.txt", prefix=name+"_", delete=False) as file_obj:
             file_obj.write(name+"\n")
             file_obj.write(contents)
             file_name=file_obj.name
-        result=subprocess.run(["emacsclient", "-c", file_obj.name])
+        try:
+            result=subprocess.run(editor+[file_obj.name])
+        except:
+            result=subprocess.run(["gvim", "-f"]+[file_obj.name])
         if result.returncode==0:
             with open(file_name, "r") as file_obj:
                 name=file_obj.readline().strip()
@@ -49,8 +54,14 @@ def editor():
     try:
         file_name=sys.argv[1]
     except:
-        print("usage: python3 editor.py filename.json")
+        print("usage: python3 editor.py filename.json [texteditor [params]]")
+        print("eg: python3 editor.py filename.json gedit")
 
+    if len(sys.argv) > 2:
+        editor_program=sys.argv[2:]
+    else:
+        editor_program=["emacsclient", "-c"]
+        
     if os.path.exists(file_name):
         with open(file_name) as thefile:
             json_content=json.load(thefile)
@@ -104,7 +115,7 @@ def editor():
                 for arect in json_content:
                     del arect["rect"]
                 with open(file_name, "w") as thefile:
-                    json.dump(json_content, thefile, indent=8, sort_keys=True, )
+                    json.dump(json_content, thefile, indent=3, sort_keys=True, )
                 running=False
                 return
             if e.type==pygame.MOUSEMOTION:
@@ -200,7 +211,7 @@ def editor():
                             screen.blit(font3.render("WAITING FOR EDITOR", 0, (200,0,0)),
                                         (100,100))
                             pygame.display.flip()
-                            name,contents=edit_file(name, contents)
+                            name,contents=edit_file(name, contents, editor_program)
                             pygame.event.pump()
                             clicked["title"]=name
                             clicked["body"]=contents

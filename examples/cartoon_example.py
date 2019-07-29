@@ -30,7 +30,7 @@ template_thought_bubble=NinePatchTemplate(ninpatch, pygame.Rect(24,24,12,12), py
 font=pygame.font.SysFont("Arial", 11)
 dialogue=Cartoon("dialogue", "yarns/cartoon_dialogue.json", dict(square=square, triangle=triangle), triangle, template_speech_bubble, template_thought_bubble, 3, font)
 
-dialogue.init()
+dialogue.deliver_line()
     
 clock=pygame.time.Clock()
 running=True
@@ -49,6 +49,7 @@ while running:
             dialogue.choose_option()
     screen.fill((255,255,255))
     group.draw(screen)
+    dialogue.run_stage_direction(screen.get_rect())
     dialogue.bubbles_g.draw(screen)
     if dialogue.thought_bubbles:
         sel_rect=dialogue.thought_bubbles[dialogue.selected] 

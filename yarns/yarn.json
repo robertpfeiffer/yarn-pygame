@@ -1,62 +1,82 @@
 [
    {
-      "body" : "<<run i = 1>>\nEmpty Text\n<<print i>>\n[[Go Left|Node1]]\n[[Go Right|Node2]]\n[[testing nested|Node6]]",
-      "title" : "Start",
-      "colorID" : 0,
-      "tags" : "",
-      "position" : {
-         "y" : -14,
-         "x" : 614
-      }
-   },
-   {
-      "position" : {
-         "x" : 263,
-         "y" : 277
+      "body": "<<run i = 1>>\nEmpty Text\n<<print i>>\n[[Go Left|Node1]]\n[[Go Right|Node2]]\n[[testing nested|Node6]]",
+      "colorID": 0,
+      "links": [
+         "Node1",
+         "Node2",
+         "Node6"
+      ],
+      "position": {
+         "x": 736,
+         "y": -50
       },
-      "tags" : "q",
-      "colorID" : 0,
-      "body" : "At Node 1\n (including node 2: <<include Node2>>)\n[[To Node 3|Node3]][[To End|Node4]]",
-      "title" : "Node1"
+      "tags": "",
+      "title": "Start"
    },
    {
-      "tags" : "",
-      "position" : {
-         "x" : 912,
-         "y" : 268
+      "body": "At Node 1\n (including node 2: <<include Node2>>)\n[[To Node 3|Node3]][[To End|Node4]]",
+      "colorID": 0,
+      "links": [
+         "Node3",
+         "Node4"
+      ],
+      "position": {
+         "x": 643,
+         "y": 358
       },
-      "colorID" : 0,
-      "body" : "At Node 2\n i=<<print i>>\n[[Back To Node 1|Node1]]",
-      "title" : "Node2"
+      "tags": "q",
+      "title": "Node1"
    },
    {
-      "position" : {
-         "x" : 576,
-         "y" : 411
+      "body": "At Node 2\n i=<<print i>>\n[[Back To Node 1|Node1]]",
+      "colorID": 0,
+      "links": [
+         "Node1"
+      ],
+      "position": {
+         "x": 477,
+         "y": 110
       },
-      "tags" : "",
-      "colorID" : 0,
-      "body" : "Incremented I\n<<run i = i + 1 >>\n[[Go To Node 2|Node2]]\n",
-      "title" : "Node3"
+      "tags": "",
+      "title": "Node2"
    },
    {
-      "colorID" : 0,
-      "body" : "Empty TextHello <<if True>>World <<if False>>Bar<<else>>From The Outside<<endif>>\n<<else>> Foo <<endif>>\n\nHello, <<if False>>World<<elif 1==1>>is it me you're looking for?<<elif True>>you<<else>>Dolly<<endif>>!\n\nHello, <<if False>>World<<elif 1==2>>is it me you're looking for?<<elif True>>you<<else>>Dolly<<endif>>!\n\nHello, <<if False>>World <<if False>><<elif 1==1>>is it me you're looking for?<<elif 1==1>>you<<endif>><<else>>Dolly<<endif>>!\n\nFOOFOOBARBAZ",
-      "title" : "Node4",
-      "tags" : "",
-      "position" : {
-         "y" : 37,
-         "x" : 978
-      }
-   },
-   {
-      "position" : {
-         "y" : 208,
-         "x" : 1144
+      "body": "Incremented I\n<<run i = i + 1 >>\n[[Go To Node 2|Node2]]\n",
+      "colorID": 0,
+      "links": [
+         "Node2"
+      ],
+      "position": {
+         "x": 420,
+         "y": 525
       },
-      "tags" : "",
-      "colorID" : 0,
-      "body" : "You have two options\n-> Option A\n   You took Option A\n   [[Back|Start]]\n-> Option B\n   You took Option B\n   Now You Have More Options\n   -> Option C\n       dead end!\n   -> Option D\n      [[Back|Start]]\n-> I lied You Have Three Options\n   But this one ended the game",
-      "title" : "Node6"
+      "tags": "",
+      "title": "Node3"
+   },
+   {
+      "body": "Empty TextHello <<if True>>World <<if False>>Bar<<else>>From The Outside<<endif>>\n<<else>> Foo <<endif>>\n\nHello, <<if False>>World<<elif 1==1>>is it me you're looking for?<<elif True>>you<<else>>Dolly<<endif>>!\n\nHello, <<if False>>World<<elif 1==2>>is it me you're looking for?<<elif True>>you<<else>>Dolly<<endif>>!\n\nHello, <<if False>>World <<if False>><<elif 1==1>>is it me you're looking for?<<elif 1==1>>you<<endif>><<else>>Dolly<<endif>>!\n\nFOOFOOBARBAZ",
+      "colorID": 0,
+      "links": [],
+      "position": {
+         "x": 826,
+         "y": 531
+      },
+      "tags": "",
+      "title": "Node4"
+   },
+   {
+      "body": "You have two options\n-> Option A\n   You took Option A\n   [[Back|Start]]\n-> Option B\n   You took Option B\n   Now You Have More Options\n   -> Option C\n       dead end!\n   -> Option D\n      [[Back|Start]]\n-> I lied You Have Three Options\n   But this one ended the game",
+      "colorID": 0,
+      "links": [
+         "Start",
+         "Start"
+      ],
+      "position": {
+         "x": 933,
+         "y": 185
+      },
+      "tags": "",
+      "title": "Node6"
    }
 ]

@@ -1,6 +1,5 @@
-import yarn
-import pygame
-import re
+import pygame, math, re
+import yarn.controller
 
 class Characters(object):
     pass
@@ -26,8 +25,9 @@ class Dialogue(object):
         assert(nchars>0)
         self.avg_x=cum_x/nchars
         self.min_y=min_y - 3
+        self.busy=False
 
-        self.controller=yarn.YarnController(path, name, False, dict(chars=chars_obj))
+        self.controller=yarn.controller.YarnController(path, name, False, dict(chars=chars_obj))
         self.message=self.controller.message().split("\n")
         self.message_line=0
         self.speech_template=speech
@@ -42,18 +42,82 @@ class Dialogue(object):
         self.bubbles_g=pygame.sprite.Group()
         self.main_character=main_character
 
-    def init(self):
+    def deliver_line(self):
         if len(self.message)==0:
             return
-        line=self.message[self.message_line]
         if self.message_line < len(self.message):
-            new_bubble=self.draw_bubble(line)
-            for other_bubble in self.bubbles:
-                other_bubble.rect.top -= (new_bubble.rect.height + 3)
-            self.bubbles.append(new_bubble)
-            self.bubbles_g.add(new_bubble)
+            line=self.message[self.message_line]
+            
+            dialogue_line=r"(\w+)\:(.*)"
+            stage_direction=r"\/(\w+) (\w+)\b(.*)$"
+            match=re.match(dialogue_line, line)
+            match2=re.match(stage_direction, line)
+            if match:
+                character=self.characters[match[1]]
+                content=match[2]
+                content=yarn.controller.run_macros(content,
+                                                   self.controller, True)
+                new_bubble=self.draw_bubble(character, content)
+                for other_bubble in self.bubbles:
+                    other_bubble.rect.top -= (new_bubble.rect.height + 3)
+                self.bubbles.append(new_bubble)
+                self.bubbles_g.add(new_bubble)
+            elif match2:
+                character=self.characters[match2[1]]
+                command=match2[2]
+                args=match2[3].split()
+                print("Stage Direction", character, command, args)
+                self.busy=True
+                self.stage_direction=character, command, args
+                self.direction_time=0
+            else:
+                for bubble in self.bubbles_g:
+                    bubble.kill()
+                    self.bubbles=[]
+                print(line)
+            #assert(match or match2)
 
+    def run_stage_direction(self, screen_rect):
+        if self.busy:
+            character, command, args=self.stage_direction
+            print(">", character, command, args, self.direction_time)
+
+            if command=="clear":
+                for bubble in self.bubbles:
+                    if bubble.character==character:
+                        bubble.kill()
+                self.busy=False
+            if command=="exit":
+                if self.direction_time==0:
+                    for bubble in self.bubbles:
+                        if bubble.character==character:
+                            bubble.kill()
+                if args[0]=="stage_right":
+                    character.rect.left+=3
+                if args[0]=="stage_left":
+                    character.rect.right-=3
+                if (character.rect.left>screen_rect.right
+                    or character.rect.right<screen_rect.left):
+                    self.busy=False
+                    character.kill()
+            elif command=="shake":
+                if self.direction_time==0:
+                    self.pre_shake_pos=character.rect.left
+                elif self.direction_time>45:
+                    self.busy=False
+                    character.rect.left=self.pre_shake_pos
+                    del self.pre_shake_pos
+                else:
+                    character.rect.left=self.pre_shake_pos+math.sin(self.direction_time/2)*50/self.direction_time
+            self.direction_time+=1
+            if not self.busy:
+                del self.direction_time
+                del self.stage_direction
+                self.advance()                
+            
     def advance(self):
+        if self.busy:
+            return
         if self.finished:
             for bubble in self.bubbles_g:
                 bubble.kill()
@@ -66,7 +130,7 @@ class Dialogue(object):
                 if len(self.bubbles)>=self.n_bubbles:
                     self.bubbles[0].kill()
                     self.bubbles=self.bubbles[1:]
-                self.init()
+                self.deliver_line()
         if (self.message_line == len(self.message)
             and self.controller.finished):
             self.finished=True
@@ -101,8 +165,8 @@ class Dialogue(object):
         bubble_surf.fill((255, 0, 255, 0))
         bubble_surf.set_colorkey((255, 0, 255))
         
-        print(bubble_rect)
-        print(line)
+        #print(bubble_rect)
+        #print(line)
         content_rect,_=template.blit(bubble_surf, bubble_rect)
         if flipped:
             bubble_surf=pygame.transform.flip(bubble_surf, True, False)
@@ -139,21 +203,16 @@ class Dialogue(object):
         return result
             
     
-    def draw_bubble(self, line):
-        dialogue_line=r"(\w+)\:(.*)"
-        match=re.match(dialogue_line, line)
-        assert(match is not None)
-        character=self.characters[match[1]]
-        content=match[2].strip()
+    def draw_bubble(self, character, content):
         bubble_surf=self.prepare_bubble(
-            content,
+            content.strip(),
             self.speech_template,
             character.rect.centerx > self.avg_x)
         bubble_rect=bubble_surf.get_rect()
         bubble_sprite=pygame.sprite.Sprite()
         bubble_sprite.image=bubble_surf
         bubble_sprite.rect=bubble_rect
-        bubble_sprite.text=line
+        bubble_sprite.text=content
         bubble_sprite.character=character
         
         if character.rect.centerx < self.avg_x:
@@ -164,12 +223,14 @@ class Dialogue(object):
         return bubble_sprite
 
     def choose_option(self):
+        if self.busy:
+            return
         if self.finished:
             return
         if (self.message_line == len(self.message)):
             self.controller.transition(self.options[self.selected])
             self.message=self.controller.message().split("\n")
-            print(self.message)
+            #print(self.message)
             self.message_line=0
             self.options=self.controller.choices()
             self.selected=0
@@ -177,69 +238,6 @@ class Dialogue(object):
                 bubble.kill()
             self.bubbles=[]
             self.thought_bubbles=[]
-            self.init()
+            self.deliver_line()
             
 
-if __name__=="__main__":
-    from ninepatch import NinePatchTemplate
-    import webm_recording
-    
-    pygame.init()
-    screen=pygame.display.set_mode((640,360), pygame.SCALED)
-
-    group=pygame.sprite.Group()
-    triangle=pygame.sprite.Sprite()
-    triangle.image=pygame.image.load("triangle_sprite.png").convert_alpha()
-    triangle.rect=triangle.image.get_rect()
-    triangle.rect.topleft=400,200
-    
-    square=pygame.sprite.Sprite()
-    square.image=pygame.image.load("square_sprite.png").convert_alpha()
-    square.rect=square.image.get_rect()
-    square.rect.topleft=200,200
-
-    group.add(square)
-    group.add(triangle)
-
-    ninpatch=pygame.image.load("bubble3.png")
-    template_speech_bubble=NinePatchTemplate(ninpatch, pygame.Rect(11,11,8,4), pygame.Rect(6,6,20,15))
-    ninpatch=pygame.image.load("thought2.png").convert_alpha()
-    template_thought_bubble=NinePatchTemplate(ninpatch, pygame.Rect(24,24,8,8), pygame.Rect(14,14,35,26), True)
-    ninpatch=pygame.image.load("thought2.png").convert_alpha()
-    template_thought_bubble=NinePatchTemplate(ninpatch, pygame.Rect(24,24,12,12), pygame.Rect(14,14,35,26))
-    
-    font=pygame.font.SysFont("Arial", 11)
-    dialogue=Dialogue("dialogue", "dialogue2.json", dict(square=square, triangle=triangle), triangle, template_speech_bubble, template_thought_bubble, 3, font)
-
-    clip_recorder=webm_recording.Recorder(screen, prefix="cartoon_dialogue")
-    clip_recorder.start()
-
-    dialogue.init()
-    
-    clock=pygame.time.Clock()
-    running=True
-    while running:
-        evs=pygame.event.get()
-        for e in evs:
-            if e.type==pygame.QUIT:
-                running=False
-            if e.type==pygame.KEYDOWN and e.key==pygame.K_SPACE:
-                dialogue.advance()
-            if e.type==pygame.KEYDOWN and e.key==pygame.K_RIGHT:
-                dialogue.select_next()
-            if e.type==pygame.KEYDOWN and e.key==pygame.K_LEFT:
-                dialogue.select_prev()
-            if e.type==pygame.KEYDOWN and e.key==pygame.K_RETURN:
-                dialogue.choose_option()
-
-        screen.fill((255,255,255))
-        group.draw(screen)
-        dialogue.bubbles_g.draw(screen)
-        if dialogue.thought_bubbles:
-            sel_rect=dialogue.thought_bubbles[dialogue.selected] 
-            pygame.draw.rect(screen, (200,0,0), sel_rect, 1)
-        clip_recorder.record_maybe()
-        pygame.display.flip()
-        clock.tick(30)
-    clip_recorder.finish()
-    pygame.quit()

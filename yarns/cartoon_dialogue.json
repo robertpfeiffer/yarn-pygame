@@ -1,1 +1,38 @@
-[{"tags": [], "title": "Start", "position": {"y": 50, "x": 81}, "colorID": 0, "body": "triangle: Hello!\nsquare: Hello! What's wrong with you face?\ntriangle:What do you mean?\nsquare:I'm just messing with you.\nsquare: Your face *is* missing a corner though\ntriangle:What's wrong with YOUR face?\n[[ignore|Node2]][[punch|Node3]]", "links": ["Node2", "Node3"]}, {"body": "And so they never spoke again", "colorID": 0, "title": "Node2", "position": {"x": 55, "y": 258}, "tags": "", "links": []}, {"body": "square: ouch", "colorID": 0, "title": "Node3", "position": {"x": 452, "y": 257}, "tags": "", "links": []}]
+[
+   {
+      "body": "triangle: Hello!\nsquare: Hello! What's wrong with you face?\ntriangle:What do you mean?\nsquare:I'm just messing with you.\nsquare: Your face *is* missing a corner though\ntriangle:What's wrong with YOUR face?\n[[ignore|Node2]][[punch|Node3]]",
+      "colorID": 0,
+      "links": [
+         "Node2",
+         "Node3"
+      ],
+      "position": {
+         "x": 81,
+         "y": 50
+      },
+      "tags": [],
+      "title": "Start"
+   },
+   {
+      "body": "And so they never spoke again",
+      "colorID": 0,
+      "links": [],
+      "position": {
+         "x": 131,
+         "y": 257
+      },
+      "tags": "",
+      "title": "Node2"
+   },
+   {
+      "body": "/triangle shake\nsquare: ouch\n/triangle exit stage_right\n/square exit stage_left\n",
+      "colorID": 0,
+      "links": [],
+      "position": {
+         "x": 404,
+         "y": 258
+      },
+      "tags": "",
+      "title": "Node3"
+   }
+]

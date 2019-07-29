@@ -1,14 +1,16 @@
 yarn.py, a Python interpreter for Yarn dialogue
 ===============================================
 
-Running 
+Getting Started 
 -------
 
-At the moment, you can run the example frontend like this.
+At the moment, you can run the console frontend like this.
 
 ```bash
-python3 console.py example_yarns/wiz.json
+PYTHONPATH=$PYTHONPATH:src/ python3 runner.py yarns/yarn.json
 ```
+
+There are examples for the pygame-based frontends in `examples/`.
 
 If you want to write your own frontend, you should import yarn, and use
 `YarnController`.
@@ -20,9 +22,22 @@ If you want to write your own frontend, you should import yarn, and use
 
 Look at the console.py frontend for inspiration.
 
-If you want to run yarn in a browser, go to http://beta.blubberquark.de/yarn/.
+
+If you want to edit yarn in a browser, go to http://beta.blubberquark.de/yarn/.
 It's only tested in firefox, but it runs more stable than node-webkit, on
 my machine.
+
+There's also a simple editor tool included, but it's not yet documented
+and you need to have emacsclient installed and an emacs daemon running 
+or gvim as a fallback in order to use it.
+Run it with:
+```
+python3 editor.py FILENAME.json
+```
+
+Installation
+-----------
+copy `src/yarn/` into your `$PYTHONPATH`
 
 Yarn.py syntax and semantics
 ----------------------------
@@ -102,7 +117,7 @@ Bob: Hello, Alice!
 
 Alice(angrily): It's time you returned the money you owe me
 
-Bob: *exit stage left*
+/Bob exit stage_left
 ``` 
 
 Features like this are already present in YarnSpinner, the de-facto "reference

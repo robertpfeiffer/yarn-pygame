@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-from yarn.frontend.console import run_in_console
+from yarn.console import run_in_console
 from yarn import YarnController
 import sys
 

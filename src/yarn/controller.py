@@ -38,6 +38,7 @@ If echo is True, link text will be added back into the message. For example:
         self.locals["visited"]=self.visited
         self.locals["num_visits"]=self.visits
         self.locals["visited_before"]=False
+        self.locals["first_time"]=True
         self.locals["last_state"]=None
         self.locals["link_text"]=""
         self.locals["state"]=None
@@ -64,6 +65,7 @@ If echo is True, link text will be added back into the message. For example:
         self.locals["last_state"]=self.locals["state"]
         self.state=self.states[title]
         self.locals["visited_before"]=self.visited[title]
+        self.locals["first_time"]=not self.visited[title]
         self.visited[title]=True
         self.visits[title]+=1
         self.locals["state"]=self.state.title
@@ -107,9 +109,9 @@ def code_munge(r, controller):
 
 def run_macros(code, controller, late_pass=False):
     if late_pass:
-        code_rgx = "<<!(\w+)\\b[ ]*(.*?)>>"
+        code_rgx = r"<<!(\w+)\b[ ]*(.*?)>>"
     else:
-        code_rgx = "<<(\w+)\\b[ ]*(.*?)>>"
+        code_rgx = r"<<(\w+)\b[ ]*(.*?)>>"
     
     result=""
     start_pos=0
@@ -120,7 +122,7 @@ def run_macros(code, controller, late_pass=False):
     for token_match in re.finditer(code_rgx, code):
         if not skip_over:
             result   += code[start_pos:token_match.start()]
-            start_pos = token_match.end()
+        start_pos = token_match.end()
 
         # don't add a newline for a <<statement>> on its own line
         if (len(result) > 0
@@ -135,24 +137,27 @@ def run_macros(code, controller, late_pass=False):
         if mod == "if":
             stack.append((found_clause, skip_over))
             found_clause=False
-            if not stack[-1][1]:
+            if stack[-1][1]:
+                skip_over=True
+            else:
                 found_clause = controller.eval(args)
                 skip_over = not found_clause
-            else:
-                found_clause=True
-                skip_over=True
         elif mod =="else":
-            if found_clause:
+            if stack[-1][1]:
                 skip_over=True
-            elif not stack[-1][1]:
+            elif found_clause:
+                skip_over=True
+            else:
                 skip_over=False
-                found_clause=True
+                found_clause=not skip_over
         elif mod =="elif":
-            if found_clause:
+            if stack[-1][1]:
                 skip_over=True
-            elif not stack[-1][1]:
+            elif found_clause:
+                skip_over=True
+            else:
                 found_clause= controller.eval(args)
-                skip_over= not found_clause
+                skip_over=not found_clause
         elif mod == "endif":
             (found_clause, skip_over)=stack.pop()
         elif mod == "goto":
@@ -220,8 +225,6 @@ class YarnState(object):
         self.controller=parent
 
     def pre_compile(self):
-        #print("Pre-compiling", self.title)
-        #print(self.body)
         self.sub_states=[]
         lines=self.body.split("\n")
         found_choices=False
@@ -250,10 +253,6 @@ class YarnState(object):
             else:
                 compiled+=line+"\n"
                 i+=1
-
-        #if len(self.sub_states)>0:
-        #    print("added", len(self.sub_states))
-        #    print()
 
         while len(compiled) > 1 and compiled [-1]=="\n":
             compiled=compiled[:-1]

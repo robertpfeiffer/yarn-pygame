@@ -198,15 +198,15 @@ def editor():
                                 newrect=dict(tags=[],
                                              title=link,
                                              position=dict(
-                                                 x=mx+off,
-                                                 y=my+off),
+                                                 x=clicked["position"]["x"]+off,
+                                                 y=clicked["position"]["y"]+120),
                                              colorID=0,
                                              body="Empty Text")
-                                newrect["rect"]=pygame.Rect((mx, my), (200,100))
+                                newrect["rect"]=pygame.Rect((newrect["position"]["x"],newrect["position"]["y"]), (200,100))
                                 newrect["links"]=[]
                                 named_nodes[link]=newrect
                                 json_content.append(newrect)
-                                off+=20
+                                off+=250
                 if e.button==1:
                     if doubleclick_time>0:
                         doubleclick_time=-1
@@ -264,6 +264,7 @@ def editor():
 
 
         for arect in json_content:
+            ni=0 
             for link in arect["links"]:
                 if link in named_nodes:
                     srcx,srcy=arect["rect"].midbottom
@@ -341,7 +342,11 @@ def editor():
                     pygame.draw.line(screen, (0,200,0), (trgx2, trgy2),
                                      (trgx, trgy), 2)
                 else:
-                    screen.blit(font2.render("[["+link+"]]", 0, (200,0,0)), arect["rect"].bottomleft)
+                    blx, bly = zoom_pt(arect["rect"].bottomleft, zoom, (scroll_x, scroll_y))
+                    bly+=12*ni
+                    ni+=1
+                    screen.blit(font2.render("[["+link+"]]", 0, (200,0,0)),(blx, bly))
+                            
 
         pygame.display.flip()
         clock.tick(30)

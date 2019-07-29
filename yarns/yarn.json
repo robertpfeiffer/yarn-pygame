@@ -40,7 +40,7 @@
       "title": "Node3"
    },
    {
-      "body": "Empty TextHello <<if True>>World <<if False>>Bar<<else>>From The Outside<<endif>>\n<<else>> Foo <<endif>>\n\nHello, <<if False>>World<<elif 1==1>>is it me you're looking for?<<elif True>>you<<else>>Dolly<<endif>>!\n\nHello, <<if False>>World<<elif 1==2>>is it me you're looking for?<<elif True>>you<<else>>Dolly<<endif>>!\n\nHello, <<if False>>World <<if False>><<elif 1==1>>is it me you're looking for?<<elif 1==1>>you<<endif>><<else>>Dolly<<endif>>!\n\nFOOFOOBARBAZ",
+      "body": "\nHello <<if True>>World <<if False>>Bar<<else>>From The Outside<<endif>><<else>> Foo <<endif>>\n\nHello, <<if False>>World<<elif 1==1>>is it me you're looking for?<<elif True>>you<<else>>Dolly<<endif>>!\n\nHello, <<if False>>World<<elif 1==2>>is it me you're looking for?<<elif True>>you<<else>>Dolly<<endif>>!\n\nHello, <<if False>>World <<if False>><<elif 1==1>>is it me you're looking for?<<elif 1==1>>you<<endif>><<else>>Dolly<<endif>>!\n\nFOOFOOBARBAZ\n",
       "colorID": 0,
       "position": {
          "x": 826,

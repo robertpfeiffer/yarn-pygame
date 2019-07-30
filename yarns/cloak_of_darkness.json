@@ -1,6 +1,6 @@
 [
    {
-      "body": "<<goto Foyer>>\n[[start game|Foyer]]\n",
+      "body": "\n<<goto Foyer>>\n",
       "colorID": 0,
       "position": {
          "x": 251,
@@ -23,8 +23,8 @@
       "body": "Cloakroom\n=========\nThis is the cloakroom of the Opera. There is no clerk behind the counter.\n<<if wearing_cloak>>\nBehind the counter is a brass hook\n-> put cloak on hook\n   You get behind the counter, take off your cloak, and put it on the hook.\n   Now that you took it off, you get a good look at it.\n   Its velvet so perfecly black, Anish Kapoor would sue you!\n   <<run wearing_cloak=False>>\n   [[back|Cloakroom]]\n<<else>>\nYou can see your unusually dark velvet coat on the brass hook behind the counter.\n-> take and wear cloak\n   You get behind the counter and put on the cloak.\n   For some reason, you feel cold.\n   <<run wearing_cloak=True>>\n   [[back|Cloakroom]]\n<<endif>>\n[[East (to Foyer)|Foyer]]\n",
       "colorID": 0,
       "position": {
-         "x": 387,
-         "y": 335
+         "x": 425,
+         "y": 351
       },
       "tags": [],
       "title": "Cloakroom"

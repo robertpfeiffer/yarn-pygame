@@ -36,7 +36,16 @@ def find_links(text):
     result=[]
     link_rgx = r"\[\[([^\|\[\]]*?)\|([\$\w]+)\]\]"
     for link in re.finditer(link_rgx, text):
-        result.append(link[2])
+        if not link in result:
+            result.append(link[2])
+    return result
+
+def find_includes(text):
+    result=[]
+    link_rgx = r"<<(include|goto) (\w+)>>"
+    for link in re.finditer(link_rgx, text):
+        if not link in result:
+            result.append(link[2])
     return result
 
 def zoom_pt(pt, zoom, scroll):
@@ -68,7 +77,7 @@ def editor():
     editor_program=None
     if len(sys.argv) > 2:
         editor_program=sys.argv[2:]
-        
+
     if os.path.exists(file_name):
         with open(file_name) as thefile:
             json_content=json.load(thefile)
@@ -85,6 +94,7 @@ def editor():
     pygame.init()
     SCREEN_SIZE=800,600
     screen=pygame.display.set_mode(SCREEN_SIZE)
+    pygame.display.set_caption("yarnpy editor: "+file_name)
     font1=pygame.font.SysFont("Arial", 16)
     font2=pygame.font.SysFont("ubuntumono", 11)
     font3=pygame.font.SysFont("Arial", 48)
@@ -104,6 +114,7 @@ def editor():
         pos=(arect["position"]["x"],arect["position"]["y"])
         arect["rect"]=pygame.Rect(pos, (200,100))
         arect["links"]=find_links(arect["body"])
+        arect["includes"]=find_includes(arect["body"])
         named_nodes[arect["title"]]=arect
 
     if "Start" in named_nodes:
@@ -122,6 +133,7 @@ def editor():
                 for arect in json_content:
                     del arect["rect"]
                     del arect["links"]
+                    del arect["includes"]
                 with open(file_name, "w") as thefile:
                     json.dump(json_content, thefile, indent=3, sort_keys=True, )
                 running=False
@@ -201,9 +213,10 @@ def editor():
                                                  x=clicked["position"]["x"]+off,
                                                  y=clicked["position"]["y"]+120),
                                              colorID=0,
+                                             links=[],
+                                             includes=[],
                                              body="Empty Text")
                                 newrect["rect"]=pygame.Rect((newrect["position"]["x"],newrect["position"]["y"]), (200,100))
-                                newrect["links"]=[]
                                 named_nodes[link]=newrect
                                 json_content.append(newrect)
                                 off+=250
@@ -215,6 +228,7 @@ def editor():
                             name=clicked["title"]
                             contents=clicked["body"]
                             del clicked["links"]
+                            del clicked["includes"]
                             del named_nodes[name]
                             screen.blit(font3.render("WAITING FOR EDITOR", 0, (200,0,0)),
                                         (100,100))
@@ -225,6 +239,7 @@ def editor():
                             clicked["body"]=contents
                             named_nodes[name]=clicked
                             clicked["links"]=find_links(contents)
+                            clicked["includes"]=find_includes(contents)
                     else:
                         clicked=None
                         for arect in json_content:
@@ -264,13 +279,38 @@ def editor():
 
 
         for arect in json_content:
-            ni=0 
+            ni=0
+            for link in arect["includes"]:
+                if link in named_nodes:
+                    srcx,srcy=arect["rect"].midbottom
+                    trgx,trgy=named_nodes[link]["rect"].midtop
+                    if named_nodes[link]["rect"].top < arect["rect"].bottom:
+                        srcy = arect["rect"].top
+                        trgy=named_nodes[link]["rect"].bottom
+                    if named_nodes[link]["rect"].left>arect["rect"].right:
+                        srcx = arect["rect"].right
+                        trgx=named_nodes[link]["rect"].left
+                    if named_nodes[link]["rect"].right<arect["rect"].left:
+                        srcx = arect["rect"].left
+                        trgx=named_nodes[link]["rect"].right
+
+                    srcx,srcy=zoom_pt((srcx,srcy), zoom, (scroll_x, scroll_y))
+                    trgx,trgy=zoom_pt((trgx,trgy), zoom, (scroll_x, scroll_y))
+
+                    pygame.draw.line(screen, (200,0,0), (srcx, srcy),
+                                         (trgx, trgy), 1)
+                    pygame.draw.circle(screen, (200,0,0), (trgx, trgy), 3, 1)
+
+
             for link in arect["links"]:
                 if link in named_nodes:
                     srcx,srcy=arect["rect"].midbottom
                     trgx,trgy=named_nodes[link]["rect"].midtop
 
-                    if zoom>2:
+                    if zoom>2 and arect["title"]==link:
+                        continue
+
+                    if zoom>2 or (arect["title"]!=link and arect["title"] in named_nodes[link]["links"]):
                         if named_nodes[link]["rect"].top < arect["rect"].bottom:
                             srcy = arect["rect"].top
                             trgy=named_nodes[link]["rect"].bottom
@@ -298,7 +338,13 @@ def editor():
                     trgx,trgy=zoom_pt((trgx,trgy), zoom, (scroll_x, scroll_y))
                     diff=trgx-srcx
 
-                    if zoom>2 or srcy < trgy:
+
+                    if arect["title"]==link:
+                        pygame.draw.circle(screen, (0,200,0), (trgx, trgy-10),
+                                         10, 1)
+
+                        srcx,srcy=trgx-10, trgy-7
+                    elif srcy < trgy or zoom>2 or arect["title"] in named_nodes[link]["links"]:
                         pygame.draw.line(screen, (0,200,0), (srcx, srcy),
                                          (trgx, trgy), 1)
                     else:
@@ -346,7 +392,7 @@ def editor():
                     bly+=12*ni
                     ni+=1
                     screen.blit(font2.render("[["+link+"]]", 0, (200,0,0)),(blx, bly))
-                            
+
 
         pygame.display.flip()
         clock.tick(30)

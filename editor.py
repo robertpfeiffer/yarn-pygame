@@ -203,7 +203,22 @@ def editor():
                             clicked=arect
                     if clicked:
                         off=0
-                        for link in clicked["links"]:
+                        title=clicked["title"]
+                        # inbound_links=False
+                        # if title=="Start":
+                        #     inbound_links=True
+                        # for node in named_nodes:
+                        #     if (node != title and 
+                        #         title in named_nodes[node]["links"]
+                        #                + named_nodes[node]["includes"]):
+                        #         inbound_links=True
+                        #         break
+                        # if not inbound_links and clicked["body"].isspace():
+                        #     del named_nodes[title]
+                        #     json_content.remove(cicked)
+                        #     clicked=None
+
+                        for link in (clicked["links"] + clicked["includes"]):
                             if link in named_nodes:
                                 pass
                             else:
@@ -225,21 +240,29 @@ def editor():
                         doubleclick_time=-1
                         if clicked:
                             #doubleclicked
-                            name=clicked["title"]
+                            title=name=clicked["title"]
                             contents=clicked["body"]
                             del clicked["links"]
                             del clicked["includes"]
-                            del named_nodes[name]
+                            del named_nodes[title]
                             screen.blit(font3.render("WAITING FOR EDITOR", 0, (200,0,0)),
                                         (100,100))
                             pygame.display.flip()
-                            name,contents=edit_file(name, contents, editor_program)
+                            name,contents=edit_file(title, contents, editor_program)
                             pygame.event.pump()
-                            clicked["title"]=name
-                            clicked["body"]=contents
-                            named_nodes[name]=clicked
-                            clicked["links"]=find_links(contents)
-                            clicked["includes"]=find_includes(contents)
+
+                            if title=="Start":
+                                name="Start"
+                            if name=="":
+                                title=clicked["title"]
+                                json_content.remove(clicked)
+                                clicked=None
+                            else:
+                                clicked["title"]=name
+                                clicked["body"]=contents
+                                named_nodes[name]=clicked
+                                clicked["links"]=find_links(contents)
+                                clicked["includes"]=find_includes(contents)
                     else:
                         clicked=None
                         for arect in json_content:

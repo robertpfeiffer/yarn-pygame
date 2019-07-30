@@ -27,13 +27,22 @@ If you want to edit yarn in a browser, go to http://beta.blubberquark.de/yarn/.
 It's only tested in firefox, but it runs more stable than node-webkit, on
 my machine.
 
-There's also a simple editor tool included, but it's not yet documented
-and you need to have emacsclient installed and an emacs daemon running 
-or gvim as a fallback in order to use it.
+There's also a simple editor tool included, but it's not well documented
+and you need to to have the emacs daemon running, or either of gvim, Visual
+Studio Code, or sublime text as a fallback in order to use it.
 Run it with:
 ```
 python3 editor.py FILENAME.json
 ```
+To edit a node, double click it. This will open your text editor. Deleting the
+whole tile and content of a node in your text editor will delete the node.
+You can drag nodes around with the left mouse button, and move the viewport by
+clicking and dragging the empty space between the nodes.
+In order to create a new node, you must link to it from an existing node, and
+the middle-click the existing node. Broken links are shown in red under every
+node.
+If you quit the yarn editor by closing the window, your file will be saved
+automatically.
 
 Installation
 -----------

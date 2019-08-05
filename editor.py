@@ -3,6 +3,9 @@ import sys
 sys.modules["numpy"]=None
 import json, os, re, collections, sys, pygame, tempfile, math, subprocess
 
+colorids=[(255,255,255), (0x6E, 0xA5, 0xE0), (0x9E, 0xDE, 0x74),
+          (0xFF, 0xE3, 0x74), (0xF7, 0xA6, 0x66), (0xC4, 0x78, 0x62)]
+
 def edit_file(name, contents, editor_cmd):
     try:
         with tempfile.NamedTemporaryFile(
@@ -34,10 +37,10 @@ def edit_file(name, contents, editor_cmd):
 
 def find_links(text):
     result=[]
-    link_rgx = r"\[\[([^\|\[\]]*?)\|([\$\w]+)\]\]"
+    link_rgx = r"\[\[(?:(?:(?!\]\]).)+?\|)?(?P<link>\w+)\]\]"
     for link in re.finditer(link_rgx, text):
         if not link in result:
-            result.append(link[2])
+            result.append(link["link"])
     return result
 
 def find_includes(text):
@@ -271,21 +274,22 @@ def editor():
                                 doubleclick_time=15
         if doubleclick_time>0:
             doubleclick_time-=1
-            if doubleclick_time<=0:
-                clicked=None
+            #if doubleclick_time<=0:
+            #    clicked=None
 
         screen.fill((255,255,255))
         for arect in json_content:
             tx,ty=arect["rect"].topleft
             tx,ty=zoom_pt((tx,ty), zoom, (scroll_x, scroll_y))
             ty_top=ty
-            pygame.draw.rect(screen, (0,0,200), (tx, ty, arect["rect"].w/zoom, arect["rect"].h/zoom), 1)
             tx+=2
+            bgcol=colorids[arect["colorID"]]
             if zoom > 4:
                 screen.blit(font2.render(arect["title"], 0, (0,0,0)),(tx, ty))
 
             else:
-                screen.blit(font1.render(arect["title"], 0, (0,0,0)),(tx, ty))
+                screen.blit(font1.render(arect["title"], 0, (0,0,0), bgcol),(tx, ty))
+            pygame.draw.rect(screen, (0,0,200), (tx-2, ty, arect["rect"].w/zoom, arect["rect"].h/zoom), 1)
             ty+=9
 
             #if zoom==1:
@@ -303,10 +307,16 @@ def editor():
 
         for arect in json_content:
             ni=0
+            
             for link in arect["includes"]:
                 if link in named_nodes:
                     srcx,srcy=arect["rect"].midbottom
                     trgx,trgy=named_nodes[link]["rect"].midtop
+                    if clicked == named_nodes[link] or clicked == arect:
+                        line_width=3
+                    else:
+                        line_width=1
+
                     if named_nodes[link]["rect"].top < arect["rect"].bottom:
                         srcy = arect["rect"].top
                         trgy=named_nodes[link]["rect"].bottom
@@ -321,14 +331,19 @@ def editor():
                     trgx,trgy=zoom_pt((trgx,trgy), zoom, (scroll_x, scroll_y))
 
                     pygame.draw.line(screen, (200,0,0), (srcx, srcy),
-                                         (trgx, trgy), 1)
-                    pygame.draw.circle(screen, (200,0,0), (trgx, trgy), 3, 1)
+                                         (trgx, trgy), line_width)
+                    pygame.draw.circle(screen, (200,0,0), (trgx, trgy), 3, line_width)
 
 
             for link in arect["links"]:
                 if link in named_nodes:
                     srcx,srcy=arect["rect"].midbottom
                     trgx,trgy=named_nodes[link]["rect"].midtop
+                    if clicked == named_nodes[link] or clicked == arect:
+                        line_width=3
+                    else:
+                        line_width=1
+
 
                     if zoom>2 and arect["title"]==link:
                         continue
@@ -364,12 +379,12 @@ def editor():
 
                     if arect["title"]==link:
                         pygame.draw.circle(screen, (0,200,0), (trgx, trgy-10),
-                                         10, 1)
+                                         10, line_width)
 
                         srcx,srcy=trgx-10, trgy-7
                     elif srcy < trgy or zoom>2 or arect["title"] in named_nodes[link]["links"]:
                         pygame.draw.line(screen, (0,200,0), (srcx, srcy),
-                                         (trgx, trgy), 1)
+                                         (trgx, trgy), line_width)
                     else:
                         gap=arect["rect"].width/2
                         if abs(diff1) < arect["rect"].width and diff1 >= 0:
@@ -390,11 +405,11 @@ def editor():
                             p4 = (trgx-diff*0.05-(dx/2)/zoom, trgy-(35+abs(diff)*0.1)/zoom)
 
                         pygame.draw.line(screen, (0,200,0),
-                                         (srcx, srcy),p1, 1)
-                        pygame.draw.line(screen, (0,200,0),p1, p2, 1)
-                        pygame.draw.line(screen, (0,200,0),p2, p3, 1)
-                        pygame.draw.line(screen, (0,200,0),p3, p4, 1)
-                        pygame.draw.line(screen, (0,200,0), p4, (trgx, trgy), 1)
+                                         (srcx, srcy),p1, line_width)
+                        pygame.draw.line(screen, (0,200,0),p1, p2, line_width)
+                        pygame.draw.line(screen, (0,200,0),p2, p3, line_width)
+                        pygame.draw.line(screen, (0,200,0),p3, p4, line_width)
+                        pygame.draw.line(screen, (0,200,0), p4, (trgx, trgy), line_width)
                         srcx, srcy=p4
 
                     angle=math.atan2(trgy-srcy, trgx-srcx)

@@ -6,11 +6,25 @@ import json, os, re, collections, sys, pygame, tempfile, math, subprocess
 colorids=[(255,255,255), (0x6E, 0xA5, 0xE0), (0x9E, 0xDE, 0x74),
           (0xFF, 0xE3, 0x74), (0xF7, 0xA6, 0x66), (0xC4, 0x78, 0x62)]
 
-def edit_file(name, contents, editor_cmd):
+def edit_file(name, attrs, contents, editor_cmd):
+    attrs_new={}
     try:
         with tempfile.NamedTemporaryFile(
                 mode='w', suffix=".yarn.txt", prefix=name+"_", delete=False) as file_obj:
-            file_obj.write(name+"\n")
+            file_obj.write("title: "+name+"\n")
+            for key in attrs:
+                value=attrs[key]
+                if key in ("title", "links", "includes", "rect",
+                           "body", "position"):
+                    pass
+                elif key=="tags":
+                    file_obj.write("tags: "+", ".join(value)+"\n")
+                elif key=="colorID":
+                    file_obj.write("colorID: "+str(value)+"\n")
+                elif type(value)==str:
+                    file_obj.write(key + ": "+value+"\n")
+
+            file_obj.write("---\n")
             file_obj.write(contents)
             file_name=file_obj.name
         success=False
@@ -27,13 +41,48 @@ def edit_file(name, contents, editor_cmd):
                 success=False
         if success:
             with open(file_name, "r") as file_obj:
-                name=file_obj.readline().strip()
+                name_line=file_obj.readline().strip()
+                if not re.match("^title:\s*(\\w+)\s*$", name_line):
+                    return "", {}, ""
+                name=name_line[6:].strip()
+                attrs_new={}
+                next_line=file_obj.readline().strip()
+                while (next_line
+                       and next_line!="---"):
+                    if next_line.isspace():
+                        next_line=file_obj.readline().strip()
+                        continue
+                    else:
+                        match=re.match("^(\\w+):(.*)$", next_line)
+                        key=match[1].strip()
+                        value=match[2].strip()
+                        if key in ("title", "links", "includes", "rect",
+                                   "body", "position"):
+                            pass
+                        elif key=="tags":
+                            if value:
+                                tags=[tag.strip() for tag in value.split(",")]
+                                attrs_new["tags"]=tags
+                            else:
+                                attrs_new["tags"]=[]
+                        elif key=="colorID":
+                            attrs_new["colorID"]=int(value)
+                        elif key=="color":
+                            try:
+                                pygame.color.Color(value)
+                                attrs_new["color"]=value
+                            except:
+                                print("could not parse color", value)
+                                pass
+                        else:
+                            attrs_new[key] = value
+                    next_line=file_obj.readline().strip()
                 contents=file_obj.read()
         else:
             print("error return code")
     finally:
         os.unlink(file_name)
-    return name, contents
+    return name, attrs_new, contents
 
 def find_links(text):
     result=[]
@@ -130,7 +179,7 @@ def editor():
         mouse=pygame.mouse.get_pressed()
         mpx,mpy=pygame.mouse.get_pos()
         mx,my=zoom_inverse((mpx,mpy), zoom, (scroll_x, scroll_y))
-
+        assert(len(json_content)==len(named_nodes))
         for e in evs:
             if e.type==pygame.QUIT:
                 for arect in json_content:
@@ -245,17 +294,31 @@ def editor():
                             #doubleclicked
                             title=name=clicked["title"]
                             contents=clicked["body"]
-                            del clicked["links"]
-                            del clicked["includes"]
+
+                            keep_keys=['position', 'rect', 'tags', 'colorID', 'title', 'body']
+                            del_keys=['position', 'rect', 'title', 'body', "links", "includes"]
+
+                            attrs=clicked.copy()
+                            for key in del_keys:
+                                del attrs[key]
+                            
+                            dict_keys=list(clicked.keys())
+                            for key in dict_keys:
+                                if not key in keep_keys: del clicked[key]
+                                    
                             del named_nodes[title]
                             screen.blit(font3.render("WAITING FOR EDITOR", 0, (200,0,0)),
                                         (100,100))
                             pygame.display.flip()
-                            name,contents=edit_file(title, contents, editor_program)
+                            pygame.event.pump()
+                            name, attrs, contents=edit_file(title, attrs, contents, editor_program)
                             pygame.event.pump()
 
                             if title=="Start":
                                 name="Start"
+                            if name in named_nodes:
+                                name=title
+                            
                             if name=="":
                                 title=clicked["title"]
                                 json_content.remove(clicked)
@@ -264,6 +327,12 @@ def editor():
                                 clicked["title"]=name
                                 clicked["body"]=contents
                                 named_nodes[name]=clicked
+                                print(clicked)
+                                print(attrs)
+                                
+                                for key in attrs:
+                                    clicked[key]=attrs[key]
+                           
                                 clicked["links"]=find_links(contents)
                                 clicked["includes"]=find_includes(contents)
                     else:
@@ -282,14 +351,21 @@ def editor():
             tx,ty=arect["rect"].topleft
             tx,ty=zoom_pt((tx,ty), zoom, (scroll_x, scroll_y))
             ty_top=ty
-            tx+=2
             bgcol=colorids[arect["colorID"]]
-            if zoom > 4:
-                screen.blit(font2.render(arect["title"], 0, (0,0,0)),(tx, ty))
+            if "color" in arect:
+                try:
+                    bgcol=pygame.color.Color(arect["color"])
+                except:
+                    pass
 
+            if arect["colorID"]>0:
+                pygame.draw.rect(screen, bgcol, (tx, ty, arect["rect"].w/zoom, arect["rect"].h/zoom))
             else:
-                screen.blit(font1.render(arect["title"], 0, (0,0,0), bgcol),(tx, ty))
-            pygame.draw.rect(screen, (0,0,200), (tx-2, ty, arect["rect"].w/zoom, arect["rect"].h/zoom), 1)
+                pygame.draw.rect(screen, (0,0,200), (tx, ty, arect["rect"].w/zoom, arect["rect"].h/zoom), 1)
+            tx+=2
+            
+            screen.blit(font1.render(arect["title"], 0, (0,0,0)),(tx, ty))
+                
             ty+=9
 
             #if zoom==1:

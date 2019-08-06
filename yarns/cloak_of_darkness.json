@@ -1,6 +1,6 @@
 [
    {
-      "body": "\n<<goto Foyer>>\n",
+      "body": "<<if first_time>>\n<<run disturbances=0>>\n<<run wearing_cloak=True>>\n<<endif>>\n<<goto Foyer>>\n",
       "colorID": 0,
       "position": {
          "x": 251,
@@ -11,27 +11,28 @@
    },
    {
       "body": "Bar\n===\n<<if wearing_cloak>>\n<<run disturbances += 1>>\nThis room is pitch black. You are likely to be eaten by a grue.\nSomething tells you that you should not rummage through the bar in the dark.\n-> rummage anyway\n   <<run disturbances += 1>>\n   you find nothing\n   [[stay in bar|Bar]]\n   [[back to Foyer|Foyer]]\n<<else>>\nThe lights have turned on. You're at the bar. \nAll bottles are empty. Something is written on the floor, in sawdust\n[[examine sawdust|Message]]\n<<endif>>\n[[North (to Foyer)|Foyer]]\n",
-      "colorID": 0,
+      "colorID": 1,
       "position": {
-         "x": 144,
-         "y": 346
+         "x": 168,
+         "y": 329
       },
       "tags": [],
       "title": "Bar"
    },
    {
       "body": "Cloakroom\n=========\nThis is the cloakroom of the Opera. There is no clerk behind the counter.\n<<if wearing_cloak>>\nBehind the counter is a brass hook\n-> put cloak on hook\n   You get behind the counter, take off your cloak, and put it on the hook.\n   Now that you took it off, you get a good look at it.\n   Its velvet so perfecly black, Anish Kapoor would sue you!\n   <<run wearing_cloak=False>>\n   [[back|Cloakroom]]\n<<else>>\nYou can see your unusually dark velvet coat on the brass hook behind the counter.\n-> take and wear cloak\n   You get behind the counter and put on the cloak.\n   For some reason, you feel cold.\n   <<run wearing_cloak=True>>\n   [[back|Cloakroom]]\n<<endif>>\n[[East (to Foyer)|Foyer]]\n",
-      "colorID": 0,
+      "color": "red",
+      "colorID": 2,
       "position": {
-         "x": 425,
-         "y": 351
+         "x": 451,
+         "y": 350
       },
       "tags": [],
       "title": "Cloakroom"
    },
    {
       "body": "<<if disturbances < 3>>\nThe message written in sawdust says \"YOU WIN\"\n<<else>>\nYou try to decipher the letter shapes, but all you can see are your own footprints.\nGAME OVER\n<<endif>>\n",
-      "colorID": 0,
+      "colorID": 3,
       "position": {
          "x": 148,
          "y": 527
@@ -40,11 +41,11 @@
       "title": "Message"
    },
    {
-      "body": "Foyer\n=====\n<<if first_time>>\n<<run disturbances=0>>\n<<run wearing_cloak=True>>\n<<endif>>\nYou are standing in the foyer of the old opera house.\nThere are exits to the south and west. There is a boarded-up door to the north\n[[South<<if visited[\"Bar\"]>> (to Bar)<<endif>>|Bar]]\n[[West<<if visited[\"Cloakroom\"]>> (to Cloakroom)<<endif>>|Cloakroom]]\n",
-      "colorID": 0,
+      "body": "Foyer\n=====\nYou are standing in the foyer of the old opera house.\nThere are exits to the south and west. There is a boarded-up door to the north\n[[South<<if visited[\"Bar\"]>> (to Bar)<<endif>>|Bar]]\n[[West<<if visited[\"Cloakroom\"]>> (to Cloakroom)<<endif>>|Cloakroom]]\n",
+      "colorID": 4,
       "position": {
-         "x": 251,
-         "y": 197
+         "x": 259,
+         "y": 200
       },
       "tags": [],
       "title": "Foyer"

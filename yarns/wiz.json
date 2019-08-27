@@ -1,6 +1,6 @@
 [
    {
-      "body": "<<run mana = 20>>\n<<run loops=1>>\nYou see a wizard.\n[[Greet him|Greet]]",
+      "body": "<<run mana = 20>>\n<<run loops=1>>\nYou see a wizard.\n[[Greet]]",
       "colorID": 3,
       "position": {
          "x": 393,

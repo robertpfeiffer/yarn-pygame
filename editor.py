@@ -1,4 +1,18 @@
 #!/usr/bin/python3
+# -*- mode: python; coding: utf-8; indent-tabs-mode: nil;  -*-
+
+"""
+minimal Yarn dialogue editor
+copyright © 2019 Robert Pfeiffer
+
+The standard Yarn editor is based on node-webkit, eats ram, and isn't emacs.
+This one is based on pygame, runs on a potato, and calls emacs for text editing.
+
+You probably won't find it super useful if your main development machine is a
+Macbook Pro.
+"""
+
+
 import sys
 sys.modules["numpy"]=None
 import json, os, re, collections, sys, pygame, tempfile, math, subprocess
@@ -123,8 +137,12 @@ def editor():
     try:
         file_name=sys.argv[1]
     except:
-        print("usage: python3 editor.py filename.json [texteditor [params]]")
-        print("eg: python3 editor.py filename.json gedit")
+        try:
+            from tkinter import filedialog
+            file_name=filedialog.askopenfilename()
+        except:
+            print("usage: python3 editor.py filename.json [texteditor [params]]")
+            print("eg: python3 editor.py filename.json gedit")
 
     editor_program=None
     if len(sys.argv) > 2:
@@ -145,7 +163,7 @@ def editor():
 
     pygame.init()
     SCREEN_SIZE=800,600
-    screen=pygame.display.set_mode(SCREEN_SIZE)
+    screen=pygame.display.set_mode(SCREEN_SIZE, pygame.RESIZABLE)
     pygame.display.set_caption("yarnpy editor: "+file_name)
     font1=pygame.font.SysFont("Arial", 16)
     font2=pygame.font.SysFont("ubuntumono", 11)
@@ -154,6 +172,7 @@ def editor():
     clock=pygame.time.Clock()
     running=True
     clicked=None
+    show_help=True
     doubleclick_time=-1
 
     named_nodes={}
@@ -173,6 +192,10 @@ def editor():
         scroll_x=named_nodes["Start"]["position"]["x"]-20
         scroll_y=named_nodes["Start"]["position"]["y"]-20
 
+    resizing=False
+    resizing_this_frame=False
+    last_resize=None
+
     while running:
         evs=pygame.event.get()
         keys=pygame.key.get_pressed()
@@ -180,17 +203,59 @@ def editor():
         mpx,mpy=pygame.mouse.get_pos()
         mx,my=zoom_inverse((mpx,mpy), zoom, (scroll_x, scroll_y))
         assert(len(json_content)==len(named_nodes))
+
+        resizing_this_frame=False
+
         for e in evs:
             if e.type==pygame.QUIT:
-                for arect in json_content:
+                do_save=True
+                try:
+                    # import tkinter
+                    pygame.display.quit()
+                    from tkinter import messagebox
+                    do_save=messagebox.askyesno("Yarn Ed",
+                      f"Would you like to save \"{file_name}\" before quitting?")
+                except:
+                    pass
+                if do_save:
+                    for arect in json_content:
+                        del arect["rect"]
+                        del arect["links"]
+                        del arect["includes"]
+                    with open(file_name, "w") as thefile:
+                        json.dump(json_content, thefile,
+                                  indent=3, sort_keys=True)
+                running=False
+                return
+            elif e.type==pygame.VIDEORESIZE:
+                resizing=True
+                resizing_this_frame=True
+                last_resize=e.w, e.h
+            elif e.type==pygame.KEYDOWN and e.key==pygame.K_h:
+                show_help = not show_help
+            elif e.type==pygame.KEYDOWN and e.key==pygame.K_s:
+                try:
+                    from tkinter import filedialog
+                    res=filedialog.asksaveasfilename()
+                    if res:
+                        file_name=res
+                    pygame.display.set_caption("yarnpy editor: "+file_name)
+                except:
+                    pass
+
+                content_copy=[r.copy() for r in json_content]
+                for arect in content_copy:
                     del arect["rect"]
                     del arect["links"]
                     del arect["includes"]
                 with open(file_name, "w") as thefile:
-                    json.dump(json_content, thefile, indent=3, sort_keys=True, )
-                running=False
-                return
-            if e.type==pygame.MOUSEMOTION:
+                    json.dump(content_copy, thefile,
+                              indent=3, sort_keys=True)
+            elif e.type==pygame.KEYDOWN and e.key==pygame.K_SPACE:
+                scroll_x=named_nodes["Start"]["position"]["x"]-20
+                scroll_y=named_nodes["Start"]["position"]["y"]-20
+                zoom=1
+            elif e.type==pygame.MOUSEMOTION:
                 doubleclick_time=-1
                 buttons=e.buttons
                 rx,ry=e.rel
@@ -233,9 +298,9 @@ def editor():
                 elif buttons[0]:
                     scroll_x-=rx
                     scroll_y-=ry
-            if e.type==pygame.MOUSEBUTTONUP:
+            elif e.type==pygame.MOUSEBUTTONUP:
                 pass
-            if e.type==pygame.MOUSEBUTTONDOWN:
+            elif e.type==pygame.MOUSEBUTTONDOWN:
                 if e.button==5:
                     if zoom<6:
                         zoom+=1
@@ -260,7 +325,7 @@ def editor():
                         # if title=="Start":
                         #     inbound_links=True
                         # for node in named_nodes:
-                        #     if (node != title and 
+                        #     if (node != title and
                         #         title in named_nodes[node]["links"]
                         #                + named_nodes[node]["includes"]):
                         #         inbound_links=True
@@ -301,11 +366,11 @@ def editor():
                             attrs=clicked.copy()
                             for key in del_keys:
                                 del attrs[key]
-                            
+
                             dict_keys=list(clicked.keys())
                             for key in dict_keys:
                                 if not key in keep_keys: del clicked[key]
-                                    
+
                             del named_nodes[title]
                             screen.blit(font3.render("WAITING FOR EDITOR", 0, (200,0,0)),
                                         (100,100))
@@ -318,7 +383,7 @@ def editor():
                                 name="Start"
                             if name in named_nodes:
                                 name=title
-                            
+
                             if name=="":
                                 title=clicked["title"]
                                 json_content.remove(clicked)
@@ -329,10 +394,10 @@ def editor():
                                 named_nodes[name]=clicked
                                 print(clicked)
                                 print(attrs)
-                                
+
                                 for key in attrs:
                                     clicked[key]=attrs[key]
-                           
+
                                 clicked["links"]=find_links(contents)
                                 clicked["includes"]=find_includes(contents)
                     else:
@@ -341,12 +406,21 @@ def editor():
                             if arect["rect"].collidepoint(mx,my):
                                 clicked=arect
                                 doubleclick_time=15
+        if resizing and not resizing_this_frame:
+            SCREEN_SIZE=last_resize
+            screen=pygame.display.set_mode(SCREEN_SIZE, pygame.RESIZABLE)
+            resizing=False
+            resizing_this_frame=False
+            last_resize=None
+
+
         if doubleclick_time>0:
             doubleclick_time-=1
             #if doubleclick_time<=0:
             #    clicked=None
 
         screen.fill((255,255,255))
+
         for arect in json_content:
             tx,ty=arect["rect"].topleft
             tx,ty=zoom_pt((tx,ty), zoom, (scroll_x, scroll_y))
@@ -363,9 +437,9 @@ def editor():
             else:
                 pygame.draw.rect(screen, (0,0,200), (tx, ty, arect["rect"].w/zoom, arect["rect"].h/zoom), 1)
             tx+=2
-            
+
             screen.blit(font1.render(arect["title"], 0, (0,0,0)),(tx, ty))
-                
+
             ty+=9
 
             #if zoom==1:
@@ -383,7 +457,7 @@ def editor():
 
         for arect in json_content:
             ni=0
-            
+
             for link in arect["includes"]:
                 if link in named_nodes:
                     srcx,srcy=arect["rect"].midbottom
@@ -507,6 +581,20 @@ def editor():
                     ni+=1
                     screen.blit(font2.render("[["+link+"]]", 0, (200,0,0)),(blx, bly))
 
+        if show_help:
+            pygame.draw.rect(screen, (20,20,20), (SCREEN_SIZE[0]-260, 10, 250, 150))
+            screen.blit(font1.render("HELP:", 0, (200,200,200)),(SCREEN_SIZE[0]-255, 15))
+            screen.blit(font2.render("click & drag to move nodes", 0, (200,200,200)), (SCREEN_SIZE[0]-255, 35))
+            screen.blit(font2.render("drag background to move view ", 0, (200,200,200)), (SCREEN_SIZE[0]-255, 45))
+            screen.blit(font2.render("double click to edit nodes", 0, (200,200,200)), (SCREEN_SIZE[0]-255, 55))
+            screen.blit(font2.render("broken links show up red below nodes", 0, (200,200,200)), (SCREEN_SIZE[0]-255, 65))
+            screen.blit(font2.render(" middle click to create these nodes", 0, (200,200,200)), (SCREEN_SIZE[0]-255, 75))
+            screen.blit(font2.render("delete all text in editor to delete node", 0, (200,200,200)), (SCREEN_SIZE[0]-255, 85))
+            screen.blit(font2.render("'Start' cannot be renamed or deleted", 0, (200,200,200)), (SCREEN_SIZE[0]-255, 95))
+            screen.blit(font2.render("SPACE to center on 'Start' node", 0, (200,200,200)), (SCREEN_SIZE[0]-255, 105))
+            screen.blit(font2.render("S to save", 0, (200,200,200)), (SCREEN_SIZE[0]-255, 115))
+            screen.blit(font2.render("H to toggle this help", 0, (200,200,200)), (SCREEN_SIZE[0]-255, 125))
+            screen.blit(font2.render("mouse wheel to zoom", 0, (200,200,200)), (SCREEN_SIZE[0]-255, 135))
 
         pygame.display.flip()
         clock.tick(30)

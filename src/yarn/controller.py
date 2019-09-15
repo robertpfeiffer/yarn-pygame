@@ -1,3 +1,5 @@
+# part of yarn.py, copyright © 2019 Robert Pfeiffer
+# this is the main part that controls dialogue state
 import re, json, collections
 
 class YarnController(object):

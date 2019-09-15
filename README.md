@@ -1,8 +1,8 @@
-yarn.py, a Python interpreter for Yarn dialogue
-===============================================
+yarn.py, a Python runtime for Yarn dialogue
+===========================================
 
 Getting Started 
--------
+---------------
 
 At the moment, you can run the console frontend like this.
 
@@ -45,8 +45,9 @@ If you quit the yarn editor by closing the window, your file will be saved
 automatically.
 
 Installation
------------
-copy `src/yarn/` into your `$PYTHONPATH`
+------------
+
+Copy `src/yarn/` into your `$PYTHONPATH` or into your game.
 
 Yarn.py syntax and semantics
 ----------------------------
@@ -133,3 +134,11 @@ Features like this are already present in YarnSpinner, the de-facto "reference
 implementation" of Yarn. We will aim for feature parity. But we won't aim for
 full source compatibility, because YarnSpinner includes a custom macro language
 instead of Python scripting.
+
+License
+-------
+The editor implemented in the file `editor.py` is released under the terms of 
+the GNU General Public License, version 3 or later.
+
+The run-time components in src/yarn are released under the terms of the 
+MIT License, to allow use in commercial, closed-source games.

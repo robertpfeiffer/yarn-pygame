@@ -1,3 +1,4 @@
+# part of yarn.py, copyright © 2019 Robert Pfeiffer
 import yarn
 import pygame
 import re

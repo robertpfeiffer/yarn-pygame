@@ -1,3 +1,4 @@
+# part of yarn.py, copyright © 2019 Robert Pfeiffer
 import yarn
 
 def run_in_console(controller):
@@ -24,4 +25,3 @@ def run_in_console(controller):
         print("\n")
     print(controller.message())
     print("The End")
-            

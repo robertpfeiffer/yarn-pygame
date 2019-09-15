@@ -1,3 +1,4 @@
+# part of yarn.py, copyright © 2019 Robert Pfeiffer
 import pygame
 import sys
 from yarn.frontend import NinePatchTemplate

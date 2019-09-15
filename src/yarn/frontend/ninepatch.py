@@ -1,3 +1,4 @@
+# part of yarn.py, copyright © 2019 Robert Pfeiffer
 import pygame
 import math
 def make_rect(x1,y1,x2,y2):

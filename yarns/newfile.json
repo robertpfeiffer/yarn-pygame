@@ -1,1 +1,32 @@
-[{"tags": [], "title": "Start", "position": {"x": 145, "y": 57}, "colorID": 0, "body": "You are at a clearing in the forest.\nDead leaves cover the ground.\nA path leads north.\n\n[[go north|WhiteHouse]]\n", "links": ["WhiteHouse"]}, {"tags": [], "title": "WhiteHouse", "position": {"x": 136, "y": 212}, "colorID": 0, "body": "You are standing in front of a white house.\nThere is a mailbox in front of the house.\nA rocking chair stands on the front porch next to the door.\nTo the west you see an open window on the ground floor. \n[[west|Kitchen]]\n[[enter|Entrance]]\n", "links": ["Kitchen", "Entrance"]}, {"tags": [], "title": "Entrance", "position": {"x": 123, "y": 393}, "colorID": 0, "body": "It is pitch black. You are likely to be eaten by a grue.\n[[turn on light|EntranceLit]]\n", "links": ["EntranceLit"]}]
+[
+   {
+      "body": "You are at a clearing in the forest.\nDead leaves cover the ground.\nA path leads north.\n\n[[go north|WhiteHouse]]\n",
+      "colorID": 0,
+      "position": {
+         "x": 145,
+         "y": 57
+      },
+      "tags": "",
+      "title": "Start"
+   },
+   {
+      "body": "You are standing in front of a white house.\nThere is a mailbox in front of the house.\nA rocking chair stands on the front porch next to the door.\nTo the west you see an open window on the ground floor. \n[[west|Kitchen]]\n[[enter|Entrance]]\n",
+      "colorID": 0,
+      "position": {
+         "x": 136,
+         "y": 212
+      },
+      "tags": "",
+      "title": "WhiteHouse"
+   },
+   {
+      "body": "It is pitch black. You are likely to be eaten by a grue.\n[[turn on light|EntranceLit]]\n",
+      "colorID": 0,
+      "position": {
+         "x": 123,
+         "y": 393
+      },
+      "tags": "",
+      "title": "Entrance"
+   }
+]

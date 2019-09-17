@@ -165,6 +165,9 @@ def editor():
     if os.path.exists(file_name):
         with open(file_name) as thefile:
             json_content=json.load(thefile)
+            for arect in thefile:
+                if type(arect["tags"])==str:
+                   arect["tags"]=arect["tags"].split()
     else:
         json_content=[
             dict(tags=[],
@@ -236,6 +239,8 @@ def editor():
                         del arect["rect"]
                         del arect["links"]
                         del arect["includes"]
+                        if type(arect["tags"])==list:
+                            arect["tags"]=" ".join(arect["tags"])
                     with open(file_name, "w") as thefile:
                         json.dump(json_content, thefile,
                                   indent=3, sort_keys=True)

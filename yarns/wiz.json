@@ -1,12 +1,12 @@
 [
    {
-      "body": "<<run mana = 20>>\n<<run loops=1>>\nYou see a wizard.\n[[Greet]]",
+      "body": "<<run mana = 20>>\n<<run loops=1>>\nYou see a wizard.\n[[Greet]]\n",
       "colorID": 3,
       "position": {
          "x": 393,
          "y": 471
       },
-      "tags": "#tags",
+      "tags": "tags",
       "title": "Start"
    },
    {

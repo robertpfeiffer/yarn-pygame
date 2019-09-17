@@ -7,7 +7,7 @@ class Characters(object):
     pass
 
 class Dialogue(object):
-    def __init__(self, name, path, characters, box, font):
+    def __init__(self, name, path, characters, box, font, **variables):
         self.characters={}
         chars_obj=Characters
 
@@ -15,7 +15,7 @@ class Dialogue(object):
             self.characters[char_name.lower()]=characters[char_name]
             setattr(chars_obj,char_name,characters[char_name])
 
-        self.controller=yarn.YarnController(path, name, False, dict(chars=chars_obj))
+        self.controller=yarn.YarnController(path, name, False, dict(chars=chars_obj, **variables))
         self.message=self.controller.message().split("\n")
         self.message_line=0
         self.box_template=box

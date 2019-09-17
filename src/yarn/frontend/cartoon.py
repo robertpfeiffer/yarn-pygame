@@ -6,7 +6,7 @@ class Characters(object):
     pass
 
 class Dialogue(object):
-    def __init__(self, name, path, characters, main_character, speech, thought, n_bubbles, font):
+    def __init__(self, name, path, characters, main_character, speech, thought, n_bubbles, font, **variables):
         self.characters={}
         chars_obj=Characters
 
@@ -28,7 +28,7 @@ class Dialogue(object):
         self.min_y=min_y - 3
         self.busy=False
 
-        self.controller=yarn.controller.YarnController(path, name, False, dict(chars=chars_obj))
+        self.controller=yarn.controller.YarnController(path, name, False, dict(chars=chars_obj, **variables))
         self.message=self.controller.message().split("\n")
         self.message_line=0
         self.speech_template=speech
@@ -67,7 +67,7 @@ class Dialogue(object):
                 character=self.characters[match2[1]]
                 command=match2[2]
                 args=match2[3].split()
-                print("Stage Direction", character, command, args)
+                #print("Stage Direction", character, command, args)
                 self.busy=True
                 self.stage_direction=character, command, args
                 self.direction_time=0
@@ -75,13 +75,13 @@ class Dialogue(object):
                 for bubble in self.bubbles_g:
                     bubble.kill()
                     self.bubbles=[]
-                print(line)
+                #print(line)
             #assert(match or match2)
 
     def run_stage_direction(self, screen_rect):
         if self.busy:
             character, command, args=self.stage_direction
-            print(">", character, command, args, self.direction_time)
+            #print(">", character, command, args, self.direction_time)
 
             if command=="clear":
                 for bubble in self.bubbles:

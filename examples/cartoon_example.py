@@ -29,7 +29,7 @@ ninpatch=pygame.image.load("assets/cartoon/thought2.png").convert_alpha()
 template_thought_bubble=NinePatchTemplate(ninpatch, pygame.Rect(24,24,12,12), pygame.Rect(14,14,35,26))
     
 font=pygame.font.SysFont("Arial", 11)
-dialogue=Cartoon("dialogue", "yarns/cartoon_dialogue.json", dict(square=square, triangle=triangle), triangle, template_speech_bubble, template_thought_bubble, 3, font)
+dialogue=Cartoon("dialogue", "yarns/cartoon_dialogue.json", dict(square=square, triangle=triangle), triangle, template_speech_bubble, template_thought_bubble, 3, font, pygame=pygame)
 
 dialogue.deliver_line()
     
@@ -40,14 +40,26 @@ while running:
     for e in evs:
         if e.type==pygame.QUIT:
             running=False
-        if e.type==pygame.KEYDOWN and e.key==pygame.K_SPACE:
-            dialogue.advance()
-        if e.type==pygame.KEYDOWN and e.key==pygame.K_RIGHT:
-            dialogue.select_next()
-        if e.type==pygame.KEYDOWN and e.key==pygame.K_LEFT:
-            dialogue.select_prev()
-        if e.type==pygame.KEYDOWN and e.key==pygame.K_RETURN:
-            dialogue.choose_option()
+        if e.type==pygame.MOUSEBUTTONDOWN and e.button==1:
+            if dialogue.thought_bubbles:
+                i=0
+                for bubble in dialogue.thought_bubbles:
+                    if bubble.rect.collidepoint(e.pos):
+                        dialogue.selected=i
+                        dialogue.choose_option()
+                        break
+                    i+=1
+            else:
+                dialogue.advance()
+        if e.type==pygame.MOUSEMOTION:
+            if dialogue.thought_bubbles:
+                i=0
+                for bubble in dialogue.thought_bubbles:
+                    if bubble.rect.collidepoint(e.pos):
+                        dialogue.selected=i
+                        break
+                    i+=1
+                    
     screen.fill((255,255,255))
     group.draw(screen)
     dialogue.run_stage_direction(screen.get_rect())

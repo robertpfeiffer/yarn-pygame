@@ -31,7 +31,7 @@ group.add(triangle)
 ninpatch=pygame.image.load("assets/ui/ninpatch.png")
 template=NinePatchTemplate(ninpatch, pygame.Rect(12,12,5,5), pygame.Rect(8,7,18,19))
 font=pygame.font.SysFont("Arial", 11)
-dialogue=JRPG("a heated exchange","yarns/JRPG_dialogue.json", dict(square=square, triangle=triangle), template, font)
+dialogue=JRPG("a heated exchange","yarns/JRPG_dialogue.json", dict(square=square, triangle=triangle), template, font, pygame=pygame)
 
 clock=pygame.time.Clock()
 running=True

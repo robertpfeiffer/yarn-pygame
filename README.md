@@ -22,15 +22,17 @@ If you want to write your own frontend, you should import yarn, and use
 
 Look at the console.py frontend for inspiration.
 
+To edit yarn files, try https://yarnspinnertool.github.io/YarnEditor/
+This web app is based on the old node-webkit Yarn editor, but it runs in
+modern browsers (source at https://github.com/YarnSpinnerTool/YarnEditor).
 
-If you want to edit yarn in a browser, go to http://beta.blubberquark.de/yarn/.
-It's only tested in firefox, but it runs more stable than node-webkit, on
-my machine.
+There's also a simple pygame-based editor tool included, but it's not well
+documented and you need to to have the emacs daemon running, or either of gvim,
+Visual Studio Code, or sublime text as a fallback in order to use it.
+If you're using yarn.py to add dialogue to your pygame games, it's a fair bet
+you already have Emacs and pygame installed ;)
 
-There's also a simple editor tool included, but it's not well documented
-and you need to to have the emacs daemon running, or either of gvim, Visual
-Studio Code, or sublime text as a fallback in order to use it.
-Run it with:
+Run the editor with:
 ```
 python3 editor.py FILENAME.json
 ```
@@ -47,7 +49,12 @@ automatically.
 Installation
 ------------
 
-Copy `src/yarn/` into your `$PYTHONPATH` or into your game.
+Copy `src/yarn/` into your `$PYTHONPATH` or into your game. This library is 
+meant to be used in games, it's pure Python, just vendor it in! If anybody has
+a use case that requires putting this on PyPI, I'll do it, but for now, no need
+to make things complicated.
+The editor (licensed under the GPLv3) and the example code are not included in
+`src/yarn/`.
 
 Yarn.py syntax and semantics
 ----------------------------

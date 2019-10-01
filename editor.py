@@ -614,8 +614,8 @@ def editor():
             screen.blit(font2.render("S to save", 0, (200,200,200)), (SCREEN_SIZE[0]-255, 115))
             screen.blit(font2.render("H to toggle this help", 0, (200,200,200)), (SCREEN_SIZE[0]-255, 125))
             screen.blit(font2.render("mouse wheel to zoom", 0, (200,200,200)), (SCREEN_SIZE[0]-255, 135))
-
-        pygame.display.flip()
+        if not resizing_this_frame:
+            pygame.display.flip()
         clock.tick(30)
 
 if __name__=="__main__":

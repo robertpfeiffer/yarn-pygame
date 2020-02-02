@@ -20,7 +20,7 @@
       "title": "WhiteHouse"
    },
    {
-      "body": "It is pitch black. You are likely to be eaten by a grue.\n[[turn on light|EntranceLit]]\n",
+      "body": "It is pitch black. You are likely to be eaten by a grue.\n-> turn on light\n   the entrance is lit\n   -> turn off light\n      now it's dark again\n\nhere we go again\n",
       "colorID": 0,
       "position": {
          "x": 123,
@@ -28,5 +28,15 @@
       },
       "tags": "",
       "title": "Entrance"
+   },
+   {
+      "body": "Empty Text",
+      "colorID": 0,
+      "position": {
+         "x": 525,
+         "y": 295
+      },
+      "tags": "",
+      "title": "Kitchen"
    }
 ]

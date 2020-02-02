@@ -221,6 +221,7 @@ class YarnState(object):
     def __init__(self, title, body, parent):
         self.title=title
         self.body=body
+        self.src=body
         self.transitions={}
         self.message=""
         self.choices=[]
@@ -234,26 +235,48 @@ class YarnState(object):
         sub_state=None
         i = 0
         while i<len(lines):
-            line=lines[i]
-            if line.startswith("->"):
-                choice_line=lines[i]
-                choice_text=choice_line[2:].strip()
-                i, block_lines=get_indented_block(lines, i)
+            if lines[i].startswith("->"):
+                indent_block_start=i
+                block_sub_states=[]
+                while i<len(lines) and lines[i].startswith("->"):
+                    choice_line=lines[i]
+                    choice_text=choice_line[2:].strip()
+                    i1=i
+                    i, block_lines=get_indented_block(lines, i1)
 
-                sub_state_code="\n".join(block_lines)
-                sub_state_name=self.title+"$sub"+str(i)
+                    sub_state_code="\n".join(block_lines)
+                    sub_state_name=self.title+"$sub"+str(i1)
 
-                sub_state=YarnState(sub_state_name,
-                                  sub_state_code,
-                                  self.controller)
-                compiled+=f"[[{choice_text}|{sub_state_name}]]\n"
-                self.sub_states.append(sub_state)
-                sub_state.pre_compile()
+                    #sub_state_code += "\n".join(lines[i:])
+                    #i = len(lines)
 
-                for sub_sub_state in sub_state.sub_states:
-                    self.sub_states.append(sub_sub_state)
+                    sub_state=YarnState(sub_state_name,
+                                        sub_state_code,
+                                        self.controller)
+                    
+                    compiled+=f"[[{choice_text}|{sub_state_name}]]\n"
+
+                    block_sub_states.append(sub_state)
+                    self.sub_states.append(sub_state)
+                    sub_state.pre_compile()
+                    
+                    for sub_sub_state in sub_state.sub_states:
+                        self.sub_states.append(sub_sub_state)
+
+                if i<len(lines):
+                    rest_text='\n' + "\n".join(lines[i:])
+                    if not rest_text.isspace():
+                        self.sub_states = block_sub_states[:]
+                        
+                        for bss in block_sub_states:
+                            bss.body = bss.src+rest_text
+                            
+                            bss.pre_compile()
+                            for sub_sub_state in bss.sub_states:
+                                self.sub_states.append(sub_sub_state)
+                    break
             else:
-                compiled+=line+"\n"
+                compiled+=lines[i]+"\n"
                 i+=1
 
         while len(compiled) > 1 and compiled [-1]=="\n":
@@ -279,7 +302,7 @@ class YarnState(object):
 
         # then search for [[link text|target]] syntax
         #link_rgx = r"\[\[([^\|\[\]]*?)\|([\$\w]+)\]\]"
-        link_rgx = r"\[\[(?:(?P<text>(?:(?!\]\]).)+?)\|)?(?P<link>\w+)\]\]"
+        link_rgx = r"\[\[(?:(?P<text>(?:(?!\]\]).)+?)\|)?(?P<link>[\w\$]+)\]\]"
         last_index=0
         for link in re.finditer(link_rgx, expanded):
             link_text = link["text"] or link["link"]

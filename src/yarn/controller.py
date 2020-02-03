@@ -268,9 +268,19 @@ class YarnState(object):
                     if not rest_text.isspace():
                         self.sub_states = block_sub_states[:]
                         
+                        continue_state=YarnState(self.title+"$con",
+                                                 rest_text,
+                                                 self.controller)
+                        self.sub_states.append(continue_state)
+                        continue_state.pre_compile()
+                        for sub_sub_state in continue_state.sub_states:
+                                self.sub_states.append(sub_sub_state)
+                        
+
+                        to_append = f"<<include {continue_state.title}>>"
+
                         for bss in block_sub_states:
-                            bss.body = bss.src+rest_text
-                            
+                            bss.body = bss.src+to_append
                             bss.pre_compile()
                             for sub_sub_state in bss.sub_states:
                                 self.sub_states.append(sub_sub_state)
